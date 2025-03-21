@@ -9,18 +9,22 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
+
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('username')->unique();
+            $table->string('password'); 
+            $table->string('rol'); 
+            $table->timestamp('ultimo_login')->nullable();
+            $table->timestamps();
+            // Relación con el rol
+            $table->foreignId('role_id')->constrained('roles');
+            $table->timestamp('ultimo_login')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
-
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
             $table->string('token');
