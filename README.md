@@ -7,6 +7,17 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Documento PHP.ini configuration
+Quitar lo comentado de `extension=zip`
+
+![alt text](image-2.png)
+
+Para la configuración de postgres y que se pueda usar como base de datos, quitar ; de: 
+
+![alt text](image-3.png)
+
+![alt text](image-4.png)
+
 ## Crear un proyecto laravel
 
 ```bash
