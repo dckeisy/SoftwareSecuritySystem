@@ -42,7 +42,7 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
 
         if (! Auth::attempt($this->only('username', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+            RateLimiter::hit($this->throttleKey(),900); // 15 minutes
 
             throw ValidationException::withMessages([
                 'password' => trans('auth.failed'),
