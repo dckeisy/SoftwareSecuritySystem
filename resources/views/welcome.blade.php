@@ -4,15 +4,12 @@
             Bienvenido al Sistema de Gestión de Productos
         </h1>
         <p class="text-gray-600 dark:text-gray-400 mb-6">
-            Accede a tu cuenta o regístrate para comenzar.
+            Accede a tu cuenta para gestionar Usuarios y Productos.
         </p>
 
         <div class="space-x-4">
             <a href="{{ route('login') }}" class="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">
                 Iniciar Sesión
-            </a>
-            <a href="{{ route('register') }}" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
-                Registrarse
             </a>
         </div>
     </div>
