@@ -16,15 +16,7 @@ return new class extends Migration
             $table->string('username');
             $table->string('password');
             $table->string('role');
-            $table->json('permissions')->nullable();
-            $table->rememberToken();
-        });
-
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('user_id')->nullable()->index();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
+            $table->timestamps();
         });
 
         Schema::create('sessions', function (Blueprint $table) {
@@ -43,7 +35,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
     }
 };
