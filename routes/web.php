@@ -1,10 +1,15 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
+});
+// Gestión de Productos (para usuarios autenticados)
+Route::middleware('auth')->group(function(){
+    Route::resource('products', ProductController::class);
 });
 
 Route::get('/dashboard', function () {
