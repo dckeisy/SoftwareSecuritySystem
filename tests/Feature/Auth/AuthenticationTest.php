@@ -10,10 +10,11 @@ test('login screen can be rendered', function () {
 
 test('users can authenticate using the login screen', function () {
     $user = User::factory()->create();
+    $password = $user->role === 'superAdmin' ? 'admin12345' : 'user12345';
 
     $response = $this->post('/login', [
-        'email' => $user->email,
-        'password' => 'password',
+        'username' => $user->username,
+        'password' => $password
     ]);
 
     $this->assertAuthenticated();
@@ -24,7 +25,7 @@ test('users can not authenticate with invalid password', function () {
     $user = User::factory()->create();
 
     $this->post('/login', [
-        'email' => $user->email,
+        'username' => $user->username,
         'password' => 'wrong-password',
     ]);
 
