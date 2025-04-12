@@ -43,13 +43,14 @@ class LoginRequest extends FormRequest
         $this->ensureIsNotRateLimited();
 
         if (! Auth::attempt($this->only('username', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey(),900); // 15 minutes
+            RateLimiter::hit($this->throttleKey(),90); // 900 seconds
 
             throw ValidationException::withMessages([
                 'password' => trans('auth.failed'),
             ]);
         }
 
+        session()->forget(['login_blocked', 'block_seconds']);
         RateLimiter::clear($this->throttleKey());
     }
 
@@ -67,6 +68,7 @@ class LoginRequest extends FormRequest
         event(new Lockout($this));
 
         $seconds = RateLimiter::availableIn($this->throttleKey());
+        session(['login_blocked' => true,'block_seconds' => $seconds,]);
 
         throw ValidationException::withMessages([
             'password' => trans('auth.throttle', [
