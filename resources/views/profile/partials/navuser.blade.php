@@ -34,6 +34,9 @@
                     </x-slot>
 
                     <x-slot name="content">
+                        <x-dropdown-link :href="route('products.index')">
+                            {{ __('Productos') }}
+                        </x-dropdown-link>
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
@@ -75,7 +78,9 @@
             </div>
 
             <div class="mt-3 space-y-1">
-
+                <x-dropdown-link :href="route('products.index')">
+                    {{ __('Productos') }}
+                </x-dropdown-link>
                 <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
