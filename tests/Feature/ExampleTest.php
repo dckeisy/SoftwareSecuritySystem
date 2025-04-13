@@ -1,6 +1,6 @@
 <?php
 
 it('returns a successful response', function () {
-    $response = $this->get('/home');
+    $response = $this->get('/');
     $response->assertStatus(200);
 });
