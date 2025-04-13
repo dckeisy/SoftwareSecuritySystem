@@ -4,7 +4,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/home', function () {
+Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
