@@ -1,34 +1,40 @@
 <?php
 use App\Models\User;
 
-test('registration screen can be rendered', function () {
-    $superadmin = User::factory()->create([
+
+/**
+ * @author kendall Aaron <kendallangulo01@gmail.com>
+ *
+ */
+
+// 🧪 Create a user with the 'superadmin' role who has permission to register new users
+beforeEach(function () {
+    $this->user = User::factory()->create([
         'role' => 'superadmin',
     ]);
+});
 
-    $this->actingAs($superadmin);
-
+test('registration screen can be rendered', function () {
+    // 🚀 Act as the superadmin user
+    $this->actingAs($this->user);
+    // 🔍 Send a GET request to the registration route
     $response = $this->get('/register');
+    // ✅ Assert: The registration screen should load successfully (HTTP 200 OK)
     $response->assertStatus(200);
 });
 
 test('new users can register', function () {
-    // Crear un usuario superadmin
-    $superadmin = User::factory()->create([
-        'role' => 'superadmin',
-    ]);
-
-    // Autenticarlo
-    $this->actingAs($superadmin);
-
-    // Intentar registrar un nuevo usuario
+    // 🚀 Act as the superadmin user
+    $this->actingAs($this->user);
+    // 🧪 Send a POST request to the registration route with valid user data
     $response = $this->post('/register', [
         'username' => 'TestUser',
         'password' => 'password',
         'password_confirmation' => 'password',
         'role' => 'user',
     ]);
-
+    // ✅ Assert: The newly registered user should be authenticated
     $this->assertAuthenticated();
+    // ✅ Assert: The user should be redirected to the dashboard after registration
     $response->assertRedirect(route('dashboard', absolute: false));
 });
