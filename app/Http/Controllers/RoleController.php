@@ -25,15 +25,13 @@ class RoleController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:roles',
-            'description' => 'nullable|string',
             'permissions' => 'nullable|array',
             'permissions.*' => 'exists:permissions,id'
         ]);
 
         $role = Role::create([
             'name' => $request->name,
-            'slug' => Str::slug($request->name),
-            'description' => $request->description
+            'slug' => Str::slug($request->name)
         ]);
 
         if ($request->has('permissions')) {
@@ -55,15 +53,13 @@ class RoleController extends Controller
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:roles,name,'.$role->id,
-            'description' => 'nullable|string',
             'permissions' => 'nullable|array',
             'permissions.*' => 'exists:permissions,id'
         ]);
 
         $role->update([
             'name' => $request->name,
-            'slug' => Str::slug($request->name),
-            'description' => $request->description
+            'slug' => Str::slug($request->name)
         ]);
 
         if ($request->has('permissions')) {
