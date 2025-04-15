@@ -34,8 +34,8 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-dropdown-link :href="route('register')">
-                            {{ __('Registrar Usuarios') }}
+                        <x-dropdown-link :href="route('users.index')">
+                            {{ __('Usuarios') }}
                         </x-dropdown-link>
 
 
@@ -79,9 +79,10 @@
             </div>
 
             <div class="mt-3 space-y-1">
-                <x-dropdown-link :href="route('register')">
-                    {{ __('Registrar Usuarios') }}
+                <x-dropdown-link :href="route('users.index')">
+                    {{ __('Usuarios') }}
                 </x-dropdown-link>
+                
 
                 <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">
