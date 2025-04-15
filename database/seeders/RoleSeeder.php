@@ -16,20 +16,17 @@ class RoleSeeder extends Seeder
     {
         $superAdminRole = Role::create([
             'name' => 'SuperAdmin',
-            'slug' => 'superadmin',
-            'description' => 'Administrador con acceso completo al sistema'
+            'slug' => 'superadmin'
         ]);
         
         $auditorRole = Role::create([
             'name' => 'Auditor',
-            'slug' => 'auditor',
-            'description' => 'Solo puede ver la lista de usuarios y productos'
+            'slug' => 'auditor'
         ]);
         
         $registradorRole = Role::create([
             'name' => 'Registrador',
-            'slug' => 'registrador',
-            'description' => 'Puede gestionar productos y ver usuarios'
+            'slug' => 'registrador'
         ]);
 
         $superAdminRole->permissions()->attach(Permission::all());
