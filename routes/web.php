@@ -13,11 +13,9 @@ Route::middleware(['auth', 'check.role:superadmin'])->group(function () {
     Route::get('/dashboard', function () {
         return view('dashboard');
     })->name('dashboard');
-
-    Route::get('register', [RegisteredUserController::class, 'create'])
-        ->name('register');
-    Route::post('register', [RegisteredUserController::class, 'store']);
+    Route::resource('users', RegisteredUserController::class);
 });
+
 // Gestión de Productos (para usuarios autenticados)
 Route::middleware('auth')->group(function(){
     Route::resource('products', ProductController::class);
