@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -29,5 +30,8 @@ Route::middleware(['auth', 'check.role:usuario'])->group(function () {
         return view('userhome');
     })->name('userhome');
 });
+
+// Rutas para gestión de roles (solo para SuperAdmin)
+Route::resource('roles', RoleController::class);
 
 require __DIR__.'/auth.php';
