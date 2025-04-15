@@ -48,11 +48,15 @@
                         <!-- Rol -->
                         <div class="mt-4">
                             <x-input-label for="role" :value="__('Rol')" class="text-gray-800 dark:text-gray-100" />
-                            <x-text-input id="role" 
-                                class="block mt-1 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600" 
-                                type="text" name="role" 
-                                :value="old('role')" 
-                                required autocomplete="role" />
+                            <select name="role" id="role" 
+                                class="block mt-1 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600" required>
+                                <option value="">Seleccione un rol</option>
+                                @foreach($roles as $role)
+                                    <option value="{{ $role->slug }}" {{ old('role') == $role->slug ? 'selected' : '' }}>
+                                        {{ $role->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                             <x-input-error :messages="$errors->get('role')" class="mt-2" />
                         </div>
 

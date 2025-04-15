@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,7 +40,8 @@ class RegisteredUserController extends Controller
 
     public function create(): View
     {
-        return view('auth.users.create'); 
+        $roles = Role::all();
+        return view('auth.users.create', compact('roles'));
     }
 
     /**
@@ -68,7 +70,8 @@ class RegisteredUserController extends Controller
 
     public function edit(User $user): View
     {
-        return view('auth.users.edit', compact('user'));
+        $roles = Role::all();
+        return view('auth.users.edit', compact('user', 'roles'));
     }
     
 
