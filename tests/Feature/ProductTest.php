@@ -137,3 +137,18 @@ test('destroy elimina el producto y redirige', function () {
         'id' => $product->id,
     ]);
 });
+test('product belongs to a user', function () {
+    // Crear un usuario y un producto asociado a ese usuario
+    $user = \App\Models\User::factory()->create();
+    $product = \App\Models\Product::factory()->create([
+        'user_id' => $user->id,
+    ]);
+
+    // Obtener el usuario relacionado con el producto
+    $relatedUser = $product->user;
+
+    // Verificar que la relación sea correcta
+    expect($relatedUser)->toBeInstanceOf(\App\Models\User::class)
+                        ->and($relatedUser->id)->toBe($user->id);
+});
+
