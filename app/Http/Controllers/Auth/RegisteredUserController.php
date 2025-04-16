@@ -78,9 +78,6 @@ class RegisteredUserController extends Controller
 
     public function update(Request $request, User $user): RedirectResponse
     {
-        $request->merge([
-            'role' => strtolower($request->role),
-        ]);
         $request->validate([
             'username' => ['required', 'string', 'max:255', 'unique:users,username,' . $user->id . ',id'],
             'role_id' => ['required', 'integer', 'exists:roles,id'],
