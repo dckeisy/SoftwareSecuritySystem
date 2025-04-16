@@ -36,16 +36,17 @@
                         <input type="password" name="password_confirmation" class="w-full p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600">
 
                         <!-- Rol -->
-                        <label for="role" class="block mt-4 text-gray-800 dark:text-gray-100 font-semibold">Rol:</label>
-                        <select name="role" id="role" 
+                        <label for="role_id" class="block mt-4 text-gray-800 dark:text-gray-100 font-semibold">Rol:</label>
+                        <select name="role_id" id="role_id" 
                             class="w-full p-2 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600" required>
                             <option value="">Seleccione un rol</option>
                             @foreach($roles as $role)
-                                <option value="{{ $role->slug }}" {{ old('role', $user->role) == $role->slug ? 'selected' : '' }}>
+                                <option value="{{ $role->id }}" {{ old('role_id', $user->role_id) == $role->id ? 'selected' : '' }}>
                                     {{ $role->name }}
                                 </option>
                             @endforeach
                         </select>
+
 
                         <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-6">
                             Actualizar Usuario

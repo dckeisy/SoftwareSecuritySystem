@@ -51,16 +51,17 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+  
         $request->validate([
             'username' => ['required', 'string', 'max:255', 'unique:users,username'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'string', 'max:50'],
+            'role_id' => ['required', 'integer', 'exists:roles,id'],
         ]);
 
         $user = User::create([
             'username' => $request->username,
             'password' => Hash::make($request->password),
-            'role' => $request->role,
+            'role_id' => $request->role_id,
         ]);
 
         event(new Registered($user));
@@ -77,13 +78,16 @@ class RegisteredUserController extends Controller
 
     public function update(Request $request, User $user): RedirectResponse
     {
+        $request->merge([
+            'role' => strtolower($request->role),
+        ]);
         $request->validate([
             'username' => ['required', 'string', 'max:255', 'unique:users,username,' . $user->id . ',id'],
-            'role' => ['required', 'string', 'max:50'],
+            'role_id' => ['required', 'integer', 'exists:roles,id'],
         ]);
 
         $user->username = $request->username;
-        $user->role = $request->role;
+        $user->role_id = $request->role_id;
 
         if ($request->filled('password')) {
             $request->validate([
