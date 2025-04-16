@@ -15,6 +15,10 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+
+                    <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.index')">
+                        {{ __('Productos') }}
+                    </x-nav-link>
                 </div>
             </div>
 
@@ -38,6 +42,9 @@
                             {{ __('Usuarios') }}
                         </x-dropdown-link>
 
+                        <x-dropdown-link :href="route('products.index')">
+                            {{ __('Productos') }}
+                        </x-dropdown-link>
 
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
@@ -83,6 +90,9 @@
                     {{ __('Usuarios') }}
                 </x-dropdown-link>
                 
+                <x-dropdown-link :href="route('products.index')">
+                            {{ __('Productos') }}
+                </x-dropdown-link>
 
                 <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">
