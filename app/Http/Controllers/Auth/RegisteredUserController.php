@@ -32,6 +32,8 @@ class RegisteredUserController extends Controller
                 ->format('d/m/Y H:i:s');  // Aquí cambiamos el formato a 'día/mes/año'
 
             }
+            // Escapamos datos para prevenir XSS
+            $user->username = e($user->username);
 
         }
     
@@ -52,19 +54,36 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
   
-        $request->validate([
-            'username' => ['required', 'string', 'max:255', 'unique:users,username'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        $validated = $request->validate([
+            'username' => [
+                'required', 
+                'string', 
+                'max:255', 
+                'unique:users,username',
+                'regex:/^[a-zA-Z0-9_.-]+$/' // Solo permitir alfanuméricos y caracteres limitados
+            ],
+            'password' => [
+                'required', 
+                'confirmed', 
+                Rules\Password::min(10)
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols()
+                    ->uncompromised()
+            ],
             'role_id' => ['required', 'integer', 'exists:roles,id'],
         ]);
 
+        // Creamos el usuario con datos sanitizados
         $user = User::create([
-            'username' => $request->username,
-            'password' => Hash::make($request->password),
-            'role_id' => $request->role_id,
+            'username' => trim($validated['username']),
+            'password' => Hash::make($validated['password']),
+            'role_id' => (int)$validated['role_id'],
         ]);
 
         event(new Registered($user));
+
+        $request->session()->regenerate(); // Regeneramos sesión por seguridad
 
         return redirect()->route('users.index')->with('success', 'Usuario creado correctamente.');
     }
@@ -78,29 +97,59 @@ class RegisteredUserController extends Controller
 
     public function update(Request $request, User $user): RedirectResponse
     {
-        $request->validate([
-            'username' => ['required', 'string', 'max:255', 'unique:users,username,' . $user->id . ',id'],
+         // Validamos los datos
+         $validated = $request->validate([
+            'username' => [
+                'required', 
+                'string', 
+                'max:255', 
+                'unique:users,username,' . $user->id . ',id',
+                'regex:/^[a-zA-Z0-9_.-]+$/' // Solo permitir alfanuméricos y caracteres limitados
+            ],
             'role_id' => ['required', 'integer', 'exists:roles,id'],
         ]);
 
-        $user->username = $request->username;
-        $user->role_id = $request->role_id;
+        // Guardamos los datos originales para el log
+        $originalData = $user->getAttributes();
+        
+        // Actualizamos con datos sanitizados
+        $user->username = trim($validated['username']);
+        $user->role_id = (int)$validated['role_id'];
 
+        // Opcional actualización de contraseña
         if ($request->filled('password')) {
-            $request->validate([
-                'password' => ['confirmed', Rules\Password::defaults()],
+            $passwordValidated = $request->validate([
+                'password' => [
+                    'confirmed', 
+                    Rules\Password::min(10)
+                        ->mixedCase()
+                        ->numbers()
+                        ->symbols()
+                        ->uncompromised()
+                ],
             ]);
-            $user->password = Hash::make($request->password);
+            
+            $user->password = Hash::make($passwordValidated['password']);
         }
 
         $user->save();
+        
+        $request->session()->regenerate(); // Regeneramos sesión por seguridad
 
         return redirect()->route('users.index')->with('success', 'Usuario actualizado.');
     }
 
     public function destroy(User $user): RedirectResponse
     {
+         // Evitamos que un usuario se elimine a sí mismo
+         if ($user->id === Auth::id()) {
+            return redirect()->route('users.index')
+                ->with('error', 'No puedes eliminar tu propio usuario.');
+        }
+      
         $user->delete();
+        
+        $request->session()->regenerate(); // Regeneramos sesión por seguridad
         return redirect()->route('users.index')->with('success', 'Usuario eliminado.');
     }
 }
