@@ -30,6 +30,8 @@ Route::middleware(['auth', 'check.role:usuario'])->group(function () {
 });
 
 // Rutas para gestión de roles (solo para SuperAdmin)
-Route::resource('roles', RoleController::class);
+Route::middleware('auth')->group(function(){
+    Route::resource('roles', RoleController::class);
+});
 
 require __DIR__.'/auth.php';

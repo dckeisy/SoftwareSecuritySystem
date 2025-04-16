@@ -37,6 +37,9 @@
                         <x-dropdown-link :href="route('users.index')">
                             {{ __('Usuarios') }}
                         </x-dropdown-link>
+                        <x-dropdown-link :href="route('roles.index')">
+                            {{ __('Roles') }}
+                        </x-dropdown-link>
 
 
                         <!-- Authentication -->

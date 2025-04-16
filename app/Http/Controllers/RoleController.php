@@ -59,7 +59,7 @@ class RoleController extends Controller
 
         $role->update([
             'name' => $request->name,
-            'slug' => Str::slug($request->name)
+            'slug' => Str::slug($request->name),
         ]);
 
         if ($request->has('permissions')) {
