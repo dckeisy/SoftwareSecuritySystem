@@ -4,12 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ProductController extends Controller
 {
    public function index()
    {
     $products = Product::all();
+    if (request()->wantsJson()) {
+        return response()->json(['products' => $products], 200);
+    }
     return view("products.index", compact("products"));
    }
 
@@ -19,19 +23,28 @@ class ProductController extends Controller
    }
    public function store(Request $request)
    {
-    $request->validate([
-        'code' => 'required|unique:products,code',
-        'name' => 'required',
-        'description' => 'required',
-        'quantity' => 'required|integer',
-        'price' => 'required|numeric',
+    $validated = $request->validate([
+        'code' => 'required|string|max:10|unique:products,code',
+        'name' => 'required|string|max:255',
+        'description' => 'nullable|string|max:500',
+        'quantity' => 'required|integer|min:0',
+        'price' => 'required|numeric|min:0',
     ]);
-    Product::create($request->all());
+
+    $validated['user_id'] = Auth::user()->id;
+
+    $product = Product::create($validated);
+    if ($request->wantsJson()) {
+        return response()->json(['message' => 'Producto creado.'], 201);
+    }
     return redirect()->route('products.index')->with('success','Producto creado.');
 
    }
    public function edit(Product $product)
    {
+    if (request()->wantsJson()) {
+        return response()->json(['product' => $product], 200);
+    }
     return view('products.edit', compact('product'));
    }
    public function update(Request $request, Product $product)
