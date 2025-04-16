@@ -18,10 +18,8 @@ return new class extends Migration
             $table->text('description');
             $table->integer('quantity');
             $table->decimal('price', 8, 2);
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
             $table->timestamps();
-            // Claves foráneas a la tabla users
-            $table->foreign('created_by')->references('id')->on('users')->onDelete('set null');
-            $table->foreign('updated_by')->references('id')->on('users')->onDelete('set null');
         });
     }
 
