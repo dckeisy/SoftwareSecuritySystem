@@ -17,10 +17,9 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'id',
         'username',
         'password',
-        'role',
+        'role_id',
         'last_login_at',
     ];
 
@@ -42,6 +41,72 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'last_login_at' => 'datetime',
         ];
+    }
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    // Check if the user has a specific role
+    public function hasRole($role)
+    {
+        if (!$this->role) {
+            return false;
+        }
+        
+        if (is_string($role)) {
+            // Comparar tanto con el slug como con el nombre del rol
+            return $this->role->slug === $role || $this->role->name === $role;
+        }
+        
+        return $role->id === $this->role_id;
+    }
+
+    // Check if the user has a specific permission for an entity
+    public function hasPermission($permission, $entity)
+    {
+        if (!$this->role) {
+            return false;
+        }
+        
+        return $this->role->hasPermission($permission, $entity);
+    }
+
+    // Check if the user can access an entity (has some permission on it)
+    public function canAccess($entity)
+    {
+        if (!$this->role) {
+            return false;
+        }
+        
+        $entityObj = Entity::where('slug', $entity)->first();
+        if (!$entityObj) {
+            return false;
+        }
+        
+        return $this->role->roleEntityPermissions()
+            ->where('entity_id', $entityObj->id)
+            ->exists();
+    }
+    
+    // Get all permissions that the user has through their role
+    public function getAllPermissions()
+    {
+        if (!$this->role) {
+            return collect([]);
+        }
+        
+        $rolePermissions = [];
+        $entities = $this->role->entities();
+        
+        foreach ($entities as $entity) {
+            $permissions = $this->role->getPermissionsForEntity($entity->id);
+            $rolePermissions[$entity->name] = $permissions->pluck('name')->toArray();
+        }
+        
+        return $rolePermissions;
     }
 }
