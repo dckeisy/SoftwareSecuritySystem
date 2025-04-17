@@ -9,10 +9,12 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900 dark:text-gray-100">
-                <div class="mb-4 text-center">
+                <div class="mb-4">
+                        @if(Auth::user()->hasPermission('crear', 'productos'))
                         <a href="{{ route('products.create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                             Crear Producto
                         </a>
+                        @endif
                     </div>
                     <table class="min-w-full bg-white dark:bg-gray-700 mt-4">
                         <thead>
@@ -32,12 +34,17 @@
                                     <td class="py-2 px-4 border-b text-center">{{ $product->quantity }}</td>
                                     <td class="py-2 px-4 border-b text-center">${{ $product->price }}</td>
                                     <td class="py-2 px-4 border-b text-center">
+                                        @if(Auth::user()->hasPermission('editar', 'productos'))
                                         <a href="{{ route('products.edit', $product) }}" class="text-blue-500">Editar</a>
+                                        @endif
+                                        
+                                        @if(Auth::user()->hasPermission('borrar', 'productos'))
                                         <form action="{{ route('products.destroy', $product) }}" method="POST" class="inline">
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="text-red-500">Eliminar</button>
                                         </form>
+                                        @endif
                                     </td>
                                 </tr>
                             @endforeach
