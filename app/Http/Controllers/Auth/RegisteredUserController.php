@@ -26,13 +26,10 @@ class RegisteredUserController extends Controller
         // Convertimos la fecha UTC a la zona horaria local de cada usuario
         foreach ($users as $user) {
             if ($user->last_login_at) {
-
                 $user->last_login_at = Carbon::parse($user->last_login_at)
                 ->setTimezone(config('app.timezone'))
-                ->format('d/m/Y H:i:s');  // Aquí cambiamos el formato a 'día/mes/año'
-
+                ->format('Y-m-d H:i:s');  // Cambiamos el formato a 'año-mes-día' que es más estándar
             }
-
         }
     
         return view("auth.users.index", compact("users"));
