@@ -48,15 +48,14 @@ class CheckRole
         // Si no tiene ninguno de los roles requeridos, redireccionar según su rol
         Log::info('CheckRole: Usuario no tiene ninguno de los roles requeridos - redirigiendo según su rol');
         
+        // Los roles por defecto tienen comportamiento específico
         if ($request->user()->role->name === 'SuperAdmin') {
             Log::info('CheckRole: Redirigiendo a dashboard (SuperAdmin)');
             return redirect()->route('dashboard');
-        } elseif ($request->user()->role->name === 'Auditor' || $request->user()->role->name === 'Registrador') {
-            Log::info('CheckRole: Redirigiendo a userhome (Auditor/Registrador)');
-            return redirect()->route('userhome');
         } else {
-            Log::info('CheckRole: Redirigiendo a home (otro rol: ' . $request->user()->role->name . ')');
-            return redirect()->route('home')->with('error', 'No tiene permisos para acceder a esta sección.');
+            // Cualquier otro rol (incluyendo los personalizados) se redirige a userhome
+            Log::info('CheckRole: Redirigiendo a userhome (rol: ' . $request->user()->role->name . ')');
+            return redirect()->route('userhome');
         }
     }
 }
