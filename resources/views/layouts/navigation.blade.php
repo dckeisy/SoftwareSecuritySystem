@@ -12,9 +12,17 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    @if(auth()->user()->hasRole('superadmin'))
+                    @if(auth()->user()->hasRole('SuperAdmin'))
                         <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                            {{ __('Dashboard') }}
+                            {{ __('Inicio') }}
+                        </x-nav-link>
+                    @elseif(auth()->user()->hasRole('Auditor'))
+                        <x-nav-link :href="route('userhome')" :active="request()->routeIs('userhome')">
+                            {{ __('Inicio') }}
+                        </x-nav-link>
+                    @elseif(auth()->user()->hasRole('Registrador'))
+                        <x-nav-link :href="route('userhome')" :active="request()->routeIs('userhome')">
+                            {{ __('Inicio') }}
                         </x-nav-link>
                     @else
                         <x-nav-link :href="route('userhome')" :active="request()->routeIs('userhome')">
@@ -87,9 +95,17 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            @if(auth()->user()->hasRole('superadmin'))
+            @if(auth()->user()->hasRole('SuperAdmin'))
                 <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                     {{ __('Dashboard') }}
+                </x-responsive-nav-link>
+            @elseif(auth()->user()->hasRole('Auditor'))
+                <x-responsive-nav-link :href="route('userhome')" :active="request()->routeIs('userhome')">
+                    {{ __('Panel de Auditoría') }}
+                </x-responsive-nav-link>
+            @elseif(auth()->user()->hasRole('Registrador'))
+                <x-responsive-nav-link :href="route('userhome')" :active="request()->routeIs('userhome')">
+                    {{ __('Panel de Registro') }}
                 </x-responsive-nav-link>
             @else
                 <x-responsive-nav-link :href="route('userhome')" :active="request()->routeIs('userhome')">
@@ -108,6 +124,7 @@
         <div class="pt-4 pb-1 border-t border-gray-200 dark:border-gray-600">
             <div class="px-4">
                 <div class="font-medium text-base text-gray-800 dark:text-gray-200">{{ Auth::user()->username }}</div>
+                <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
             </div>
 
             <div class="mt-3 space-y-1">
