@@ -23,14 +23,22 @@ class UserFactory extends Factory
      */
     public function definition(): array
     {
-        $role = fake()->randomElement(['superAdmin','usuario']);
-
         return [
             'username' => fake()->userName(),
-            'role' => $role,
-            'password' => Hash::make(
-                $role === 'superAdmin' ? 'admin12345' : 'user12345'
-            ),
+            'role_id' => null, // Establecer a null inicialmente, se asignará después
+            'password' => Hash::make('user12345'), // Contraseña por defecto para todos los usuarios
         ];
+    }
+
+    /**
+     * Define a state for superadmin users.
+     */
+    public function superAdmin()
+    {
+        return $this->state(function (array $attributes) {
+            return [
+                'password' => Hash::make('admin12345'),
+            ];
+        });
     }
 }

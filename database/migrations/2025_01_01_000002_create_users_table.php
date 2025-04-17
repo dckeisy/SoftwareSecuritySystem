@@ -15,8 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('username');
             $table->string('password');
-            $table->string('role');
+            $table->unsignedBigInteger('role_id')->nullable();
             $table->timestamps();
+
+            $table->foreign('role_id')->references('id')->on('roles')->onDelete('set null');
         });
 
         Schema::create('sessions', function (Blueprint $table) {
