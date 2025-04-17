@@ -3,9 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Role;
-use App\Models\Permission;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class RoleSeeder extends Seeder
 {
@@ -16,32 +14,26 @@ class RoleSeeder extends Seeder
      */
     public function run()
     {
-        $superAdminRole = Role::create([
-            'name' => 'SuperAdmin',
-            'slug' => 'superadmin'
-        ]);
+        $roles = [
+            [
+                'name' => 'SuperAdmin',
+                'slug' => 'superadmin'
+            ],
+            [
+                'name' => 'Auditor',
+                'slug' => 'auditor'
+            ],
+            [
+                'name' => 'Registrador',
+                'slug' => 'registrador'
+            ]
+        ];
 
-        $auditorRole = Role::create([
-            'name' => 'Auditor',
-            'slug' => 'auditor'
-        ]);
-
-        $registradorRole = Role::create([
-            'name' => 'Registrador',
-            'slug' => 'registrador'
-        ]);
-
-        $superAdminRole->permissions()->attach(Permission::all());
-        
-        $auditorRole->permissions()->attach(
-            Permission::where('slug', 'ver-reportes')->first()
-        );
-
-        $registradorRole->permissions()->attach([
-            Permission::where('slug', 'crear')->first()->id,
-            Permission::where('slug', 'editar')->first()->id,
-            Permission::where('slug', 'borrar')->first()->id,
-            Permission::where('slug', 'ver-reportes')->first()->id
-        ]);
+        foreach ($roles as $role) {
+            Role::create([
+                'name' => $role['name'],
+                'slug' => $role['slug']
+            ]);
+        }
     }
 }

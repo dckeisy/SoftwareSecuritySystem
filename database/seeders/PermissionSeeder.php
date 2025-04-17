@@ -15,28 +15,23 @@ class PermissionSeeder extends Seeder
     {
         $permissions = [
             [
-                'name' => 'Crear',
-                'description' => 'Permite crear registros.'
+                'name' => 'Crear'
             ],
             [
-                'name' => 'Editar',
-                'description' => 'Permite editar registros.'
+                'name' => 'Editar'
             ],
             [
                 'name' => 'Borrar',
-                'description' => 'Permite borrar registros.'
             ],
             [
-                'name' => 'Ver Reportes',
-                'description' => 'Permite acceder a las listas.'
+                'name' => 'Ver Reportes'
             ]
         ];
 
         foreach ($permissions as $permission) {
             Permission::create([
                 'name' => $permission['name'],
-                'slug' => Str::slug($permission['name']),
-                'description' => $permission['description']
+                'slug' => Str::slug($permission['name'])
             ]);
         }
     }
