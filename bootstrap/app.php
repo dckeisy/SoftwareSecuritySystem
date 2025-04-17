@@ -5,6 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use App\Http\Middleware\CheckRole;
 use App\Http\Middleware\CheckEntityPermission;
+use App\Http\Middleware\CheckSessionExpired;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -16,7 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'check.role' => CheckRole::class,
             'check.entity.permission' => CheckEntityPermission::class,
+            'check.session' => CheckSessionExpired::class,
         ]);
+        
+        // Aplicar el middleware session check a todas las rutas protegidas por auth
+        $middleware->prependToGroup('auth', CheckSessionExpired::class);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

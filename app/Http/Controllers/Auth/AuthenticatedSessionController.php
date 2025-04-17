@@ -9,15 +9,27 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Contracts\View\Factory;
+use Illuminate\Contracts\View\View as ViewContract;
+use Illuminate\Support\Facades\DB;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
      * Display the login view.
+     *
+     * @return \Illuminate\View\View|\Illuminate\Http\JsonResponse
      */
-    public function create(): View
+    public function create()
     {
-
+        // Verificar si la solicitud es AJAX, lo que podría indicar una verificación de sesión
+        if (request()->ajax() || request()->wantsJson()) {
+            if (!Auth::check()) {
+                return response()->json(['message' => 'Sesión expirada'], 401);
+            }
+            return response()->json(['message' => 'Autenticado'], 200);
+        }
 
         $key = request()->ip(); // o el throttleKey que usás
         $maxAttempts = 5;
@@ -34,7 +46,10 @@ class AuthenticatedSessionController extends Controller
         $blocked = session('login_blocked', false);
         $seconds = session('block_seconds', 0);
 
-        return view('auth.login', compact('blocked', 'seconds'));
+        // Verificar si la sesión expiró para mostrar un mensaje
+        $status = request()->has('expired') ? 'Su sesión ha expirado. Por favor inicie sesión nuevamente.' : session('status');
+
+        return view('auth.login', compact('blocked', 'seconds', 'status'));
     }
 
     /**
@@ -47,8 +62,9 @@ class AuthenticatedSessionController extends Controller
 
         $user = Auth::user();
         if ($user) {
-            $user->last_login_at = now();
-            $user->save();
+            // Actualizar el tiempo de último login usando DB
+            DB::table('users')->where('id', $user->id)
+                ->update(['last_login_at' => now()]);
         }
 
         // Redirect based on user role

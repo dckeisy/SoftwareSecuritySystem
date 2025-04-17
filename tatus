@@ -1,0 +1,6 @@
+[33m7ef51be[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdevelop[m[33m)[m refactor: update routes and views for unified user navigation
+[33me58a4ae[m feat: improve role management interface and default permissions handling
+[33mc8945d9[m refactor: consolidate navigation components into a single unified nav
+[33mbb2ae72[m refactor: improve role middleware and permission handling
+[33ma248f29[m fix: ensure last_login_at is saved correctly when user logs in
+[33mb33e773[m fix: update date format to resolve parsing error with user last login date
