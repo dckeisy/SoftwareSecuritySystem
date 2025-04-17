@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ class RegisteredUserController extends Controller
      */
     public function index()
     {
-        $users = User::all();
+        $users = User::with('role')->get();
     
         // Convertimos la fecha UTC a la zona horaria local de cada usuario
         foreach ($users as $user) {
@@ -39,7 +40,22 @@ class RegisteredUserController extends Controller
 
     public function create(): View
     {
-        return view('auth.users.create'); 
+        $roles = Role::all();
+        
+        // Preparar los datos de roles para JavaScript
+        $rolesData = [];
+        foreach ($roles as $role) {
+            $permissions = [];
+            foreach ($role->entities() as $entity) {
+                $permissions[$entity->name] = $role->getPermissionsForEntity($entity->id)->pluck('name')->toArray();
+            }
+            $rolesData[$role->id] = [
+                'name' => $role->name,
+                'permissions' => $permissions
+            ];
+        }
+        
+        return view('auth.users.create', compact('roles', 'rolesData')); 
     }
 
     /**
@@ -52,51 +68,68 @@ class RegisteredUserController extends Controller
         $request->validate([
             'username' => ['required', 'string', 'max:255', 'unique:users,username'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role' => ['required', 'string', 'max:50'],
+            'role_id' => ['required', 'exists:roles,id'],
         ]);
 
-        $user = User::create([
-            'username' => $request->username,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
-        ]);
+        try {
+            $user = User::create([
+                'username' => $request->username,
+                'password' => Hash::make($request->password),
+                'role_id' => $request->role_id,
+            ]);
 
-        event(new Registered($user));
+            event(new Registered($user));
 
-        return redirect()->route('users.index')->with('success', 'Usuario creado correctamente.');
+            return redirect()->route('users.index')->with('success', 'Usuario creado correctamente.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error al crear el usuario: ' . $e->getMessage())->withInput();
+        }
     }
 
     public function edit(User $user): View
     {
-        return view('auth.users.edit', compact('user'));
+        $roles = Role::all();
+        return view('auth.users.edit', compact('user', 'roles'));
     }
     
-
     public function update(Request $request, User $user): RedirectResponse
     {
         $request->validate([
             'username' => ['required', 'string', 'max:255', 'unique:users,username,' . $user->id . ',id'],
-            'role' => ['required', 'string', 'max:50'],
+            'role_id' => ['required', 'exists:roles,id'],
         ]);
 
-        $user->username = $request->username;
-        $user->role = $request->role;
+        try {
+            $user->username = $request->username;
+            $user->role_id = $request->role_id;
 
-        if ($request->filled('password')) {
-            $request->validate([
-                'password' => ['confirmed', Rules\Password::defaults()],
-            ]);
-            $user->password = Hash::make($request->password);
+            if ($request->filled('password')) {
+                $request->validate([
+                    'password' => ['confirmed', Rules\Password::defaults()],
+                ]);
+                $user->password = Hash::make($request->password);
+            }
+
+            $user->save();
+
+            return redirect()->route('users.index')->with('success', 'Usuario actualizado correctamente.');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error al actualizar el usuario: ' . $e->getMessage())->withInput();
         }
-
-        $user->save();
-
-        return redirect()->route('users.index')->with('success', 'Usuario actualizado.');
     }
 
     public function destroy(User $user): RedirectResponse
     {
-        $user->delete();
-        return redirect()->route('users.index')->with('success', 'Usuario eliminado.');
+        try {
+            // Verificar que no se esté eliminando al usuario actual
+            if (Auth::id() === $user->id) {
+                return redirect()->route('users.index')->with('error', 'No puede eliminar su propio usuario.');
+            }
+            
+            $user->delete();
+            return redirect()->route('users.index')->with('success', 'Usuario eliminado correctamente.');
+        } catch (\Exception $e) {
+            return redirect()->route('users.index')->with('error', 'Error al eliminar el usuario: ' . $e->getMessage());
+        }
     }
 }
