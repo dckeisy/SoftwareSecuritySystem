@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Models\Role;
 use Illuminate\Support\Facades\RateLimiter;
 
 /**
@@ -8,55 +9,69 @@ use Illuminate\Support\Facades\RateLimiter;
  *
  */
 
-// 🛠️ Setup: executed before each test
+// Setup: ejecutado antes de cada test
 beforeEach(function () {
-    // Create a user
-    $this->user = User::factory()->create();
+    // Crear rol para las pruebas
+    $this->role = Role::create([
+        'name' => 'TestRole',
+        'slug' => 'testrole'
+    ]);
+    
+    // Crear un usuario con el rol
+    $this->user = User::factory()->create([
+        'role_id' => $this->role->id
+    ]);
 });
-// 🧹 Cleanup: executed after each test
+
+// Limpieza: ejecutada después de cada test
 afterEach(function () {
     RateLimiter::clear($this->user->id);
+    $this->user->delete();
+    $this->role->delete();
 });
 
 
 test('login screen can be rendered', function () {
-    // 🚀 Act: Send a GET request to the login route
+    // Act: Enviar una solicitud GET a la ruta de login
     $response = $this->get('/login');
-    // ✅ Assert: Check that the response status is 200 (OK)
+    // Assert: Verificar que la respuesta tiene un estado 200 (OK)
     $response->assertStatus(200);
 });
 
 test('users can authenticate using the login screen', function () {
-     // 🧪 Arrange: determine the correct password based on their role
-    $password = $this->user->role === 'superAdmin' ? 'admin12345' : 'user12345';
+    // Determine la contraseña correcta ('user12345' es la predeterminada en la factory)
+    $password = 'user12345';
 
-    // 🚀 Act: Attempt to log in with the user's credentials
+    // Act: Intentar iniciar sesión con las credenciales del usuario
     $response = $this->post('/login', [
         'username' => $this->user->username,
         'password' => $password
     ]);
 
-    // ✅ Assert: Check that the user is authenticated and redirected to the dashboard
+    // Assert: Verificar que el usuario está autenticado
     $this->assertAuthenticated();
-    $response->assertRedirect(route('dashboard', absolute: false));
+    
+    // Verificar que el usuario es redirigido a la ruta correcta según su rol
+    // Si no es SuperAdmin, debería redirigir a 'userhome'
+    $response->assertRedirect(route('userhome', absolute: false));
 });
 
 test('users can not authenticate with invalid password', function () {
-     // 🚀 Act: Attempt to log in with the correct username but an invalid password
+    // Act: Intentar iniciar sesión con el nombre de usuario correcto pero una contraseña no válida
     $this->post('/login', [
         'username' => $this->user->username,
         'password' => 'wrong-password',
     ]);
 
-    // ✅ Assert: Verify that the user remains unauthenticated (guest)
+    // Assert: Verificar que el usuario permanece no autenticado (invitado)
     $this->assertGuest();
 });
 
 test('users can logout', function () {
-    // 🚀 Act: Send a POST request to the logout route while authenticated
+    // Act: Enviar una solicitud POST a la ruta de cierre de sesión mientras está autenticado
     $response = $this->actingAs($this->user)->post('/logout');
 
-     // ✅ Assert: Confirm the user is logged out and redirected to the homepage
+    // Assert: Confirmar que el usuario ha cerrado sesión y es redirigido a la página de inicio
     $this->assertGuest();
     $response->assertRedirect('/');
 });
