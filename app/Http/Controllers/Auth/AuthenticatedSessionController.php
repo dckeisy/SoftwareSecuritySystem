@@ -46,10 +46,17 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $user = Auth::user();
-        $user->last_login_at = now();
-        $user->save;
+        if ($user) {
+            $user->last_login_at = now();
+            $user->save();
+        }
 
-        return redirect()->intended(route('dashboard'));
+        // Redirect based on user role
+        if ($user && $user->role && $user->role->name === 'SuperAdmin') {
+            return redirect()->intended(route('dashboard'));
+        } else {
+            return redirect()->intended(route('userhome'));
+        }
     }
 
     /**
