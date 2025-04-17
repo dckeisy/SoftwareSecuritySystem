@@ -11,23 +11,46 @@ class Role extends Model
 
     protected $fillable = ['name', 'slug'];
 
-    public function permissions()
-    {
-        return $this->belongsToMany(Permission::class, 'role_permission');
-    }
-
     public function users()
     {
         return $this->hasMany(User::class);
     }
 
-    // Check if the role has a specific permission
-    public function hasPermission($permission)
+    public function roleEntityPermissions()
     {
-        if (is_string($permission)) {
-            return $this->permissions->contains('slug', $permission);
+        return $this->hasMany(RoleEntityPermission::class);
+    }
+
+    // Get all entities with permissions assigned to this role
+    public function entities()
+    {
+        $entityIds = $this->roleEntityPermissions()->pluck('entity_id')->unique();
+        return Entity::whereIn('id', $entityIds)->get();
+    }
+
+    // Get all permissions assigned to this role, for a specific entity
+    public function getPermissionsForEntity($entityId)
+    {
+        $permissionIds = $this->roleEntityPermissions()
+            ->where('entity_id', $entityId)
+            ->pluck('permission_id');
+            
+        return Permission::whereIn('id', $permissionIds)->get();
+    }
+
+    // Check if the role has a specific permission for a specific entity
+    public function hasPermission($permissionSlug, $entitySlug)
+    {
+        $entity = Entity::where('slug', $entitySlug)->first();
+        $permission = Permission::where('slug', $permissionSlug)->first();
+        
+        if (!$entity || !$permission) {
+            return false;
         }
         
-        return !!$permission->intersect($this->permissions)->count();
+        return $this->roleEntityPermissions()
+            ->where('entity_id', $entity->id)
+            ->where('permission_id', $permission->id)
+            ->exists();
     }
 }

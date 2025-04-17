@@ -9,10 +9,10 @@ class Permission extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'slug', 'description'];
+    protected $fillable = ['name', 'slug'];
 
-    public function roles()
+    public function roleEntityPermissions()
     {
-        return $this->belongsToMany(Role::class, 'role_permission');
+        return $this->hasMany(RoleEntityPermission::class);
     }
 }
