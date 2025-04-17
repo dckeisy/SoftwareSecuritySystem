@@ -13,7 +13,6 @@ class PermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        // Los 4 permisos básicos definidos en UTN-05
         $permissions = [
             [
                 'name' => 'Crear',

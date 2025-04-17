@@ -59,7 +59,7 @@ class RoleController extends Controller
 
         $role->update([
             'name' => $request->name,
-            'slug' => Str::slug($request->name),
+            'slug' => Str::slug($request->name)
         ]);
 
         if ($request->has('permissions')) {
@@ -74,7 +74,7 @@ class RoleController extends Controller
 
     public function destroy(Role $role)
     {
-        // Verificar si hay usuarios con este rol antes de eliminar
+        // // Check if there are users with this role before deleting
         if ($role->users()->count() > 0) {
             return redirect()->route('roles.index')
                 ->with('error', 'No se puede eliminar el rol porque tiene usuarios asignados.');

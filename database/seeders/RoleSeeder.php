@@ -11,19 +11,21 @@ class RoleSeeder extends Seeder
 {
     /**
      * Run the database seeds.
+     *
+     * @return void
      */
-    public function run(): void
+    public function run()
     {
         $superAdminRole = Role::create([
             'name' => 'SuperAdmin',
             'slug' => 'superadmin'
         ]);
-        
+
         $auditorRole = Role::create([
             'name' => 'Auditor',
             'slug' => 'auditor'
         ]);
-        
+
         $registradorRole = Role::create([
             'name' => 'Registrador',
             'slug' => 'registrador'
@@ -34,7 +36,7 @@ class RoleSeeder extends Seeder
         $auditorRole->permissions()->attach(
             Permission::where('slug', 'ver-reportes')->first()
         );
-        
+
         $registradorRole->permissions()->attach([
             Permission::where('slug', 'crear')->first()->id,
             Permission::where('slug', 'editar')->first()->id,

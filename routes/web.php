@@ -9,7 +9,7 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-// Rutas para administrador
+// Routes for administrator
 Route::middleware(['auth', 'check.role:superadmin'])->group(function () {
     Route::get('/dashboard', function () {
         return view('dashboard');
@@ -17,19 +17,19 @@ Route::middleware(['auth', 'check.role:superadmin'])->group(function () {
     Route::resource('users', RegisteredUserController::class);
 });
 
-// Gestión de Productos (para usuarios autenticados)
+// Product Management (for authenticated users)
 Route::middleware('auth')->group(function(){
     Route::resource('products', ProductController::class);
 });
 
-// Rutas para usuario normal
+// Routes for normal user
 Route::middleware(['auth', 'check.role:usuario'])->group(function () {
     Route::get('/userhome', function () {
         return view('userhome');
     })->name('userhome');
 });
 
-// Rutas para gestión de roles (solo para SuperAdmin)
+// Routes for role management
 Route::middleware('auth')->group(function(){
     Route::resource('roles', RoleController::class);
 });
