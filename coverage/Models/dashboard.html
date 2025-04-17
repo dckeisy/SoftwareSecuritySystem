@@ -2,7 +2,7 @@
 <html lang="en">
  <head>
   <meta charset="UTF-8">
-  <title>Dashboard for C:\Proyecto-laravel-carvajal\SoftwareSecuritySystem\app\Models</title>
+  <title>Dashboard for C:\Users\kimco\Documents\Proyectos\SoftwareSecuritySystem\app\Models</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="../_css/bootstrap.min.css?v=11.0.9" rel="stylesheet" type="text/css">
   <link href="../_css/nv.d3.min.css?v=11.0.9" rel="stylesheet" type="text/css">
@@ -16,7 +16,7 @@
      <div class="col-md-12">
       <nav aria-label="breadcrumb">
        <ol class="breadcrumb">
-         <li class="breadcrumb-item"><a href="../index.html">C:\Proyecto-laravel-carvajal\SoftwareSecuritySystem\app</a></li>
+         <li class="breadcrumb-item"><a href="../index.html">C:\Users\kimco\Documents\Proyectos\SoftwareSecuritySystem\app</a></li>
          <li class="breadcrumb-item"><a href="index.html">Models</a></li>
          <li class="breadcrumb-item active">(Dashboard)</li>
 
@@ -58,9 +58,11 @@
         </tr>
        </thead>
        <tbody>
+       <tr><td><a href="Entity.php.html#8">App\Models\Entity</a></td><td class="text-right">0%</td></tr>
        <tr><td><a href="Permission.php.html#8">App\Models\Permission</a></td><td class="text-right">0%</td></tr>
-       <tr><td><a href="Product.php.html#7">App\Models\Product</a></td><td class="text-right">0%</td></tr>
-       <tr><td><a href="Role.php.html#8">App\Models\Role</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RoleEntityPermission.php.html#8">App\Models\RoleEntityPermission</a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="User.php.html#9">App\Models\User</a></td><td class="text-right">41%</td></tr>
+       <tr><td><a href="Role.php.html#8">App\Models\Role</a></td><td class="text-right">50%</td></tr>
 
        </tbody>
       </table>
@@ -77,7 +79,8 @@
         </tr>
        </thead>
        <tbody>
-       <tr><td><a href="Role.php.html#8">App\Models\Role</a></td><td class="text-right">20</td></tr>
+       <tr><td><a href="User.php.html#9">App\Models\User</a></td><td class="text-right">53</td></tr>
+       <tr><td><a href="Role.php.html#8">App\Models\Role</a></td><td class="text-right">13</td></tr>
 
        </tbody>
       </table>
@@ -115,11 +118,18 @@
         </tr>
        </thead>
        <tbody>
-       <tr><td><a href="Permission.php.html#14"><abbr title="App\Models\Permission::roles">roles</abbr></a></td><td class="text-right">0%</td></tr>
-       <tr><td><a href="Product.php.html#11"><abbr title="App\Models\Product::casts">casts</abbr></a></td><td class="text-right">0%</td></tr>
-       <tr><td><a href="Role.php.html#14"><abbr title="App\Models\Role::permissions">permissions</abbr></a></td><td class="text-right">0%</td></tr>
-       <tr><td><a href="Role.php.html#19"><abbr title="App\Models\Role::users">users</abbr></a></td><td class="text-right">0%</td></tr>
-       <tr><td><a href="Role.php.html#25"><abbr title="App\Models\Role::hasPermission">hasPermission</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Entity.php.html#14"><abbr title="App\Models\Entity::rolePermissions">rolePermissions</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Permission.php.html#14"><abbr title="App\Models\Permission::roleEntityPermissions">roleEntityPermissions</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Role.php.html#14"><abbr title="App\Models\Role::users">users</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Role.php.html#25"><abbr title="App\Models\Role::entities">entities</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="Role.php.html#32"><abbr title="App\Models\Role::getPermissionsForEntity">getPermissionsForEntity</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RoleEntityPermission.php.html#16"><abbr title="App\Models\RoleEntityPermission::role">role</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RoleEntityPermission.php.html#21"><abbr title="App\Models\RoleEntityPermission::entity">entity</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="RoleEntityPermission.php.html#26"><abbr title="App\Models\RoleEntityPermission::permission">permission</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="User.php.html#79"><abbr title="App\Models\User::canAccess">canAccess</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="User.php.html#96"><abbr title="App\Models\User::getAllPermissions">getAllPermissions</abbr></a></td><td class="text-right">0%</td></tr>
+       <tr><td><a href="User.php.html#54"><abbr title="App\Models\User::hasRole">hasRole</abbr></a></td><td class="text-right">80%</td></tr>
+       <tr><td><a href="Role.php.html#42"><abbr title="App\Models\Role::hasPermission">hasPermission</abbr></a></td><td class="text-right">87%</td></tr>
 
        </tbody>
       </table>
@@ -136,7 +146,10 @@
         </tr>
        </thead>
        <tbody>
-       <tr><td><a href="Role.php.html#25"><abbr title="App\Models\Role::hasPermission">hasPermission</abbr></a></td><td class="text-right">6</td></tr>
+       <tr><td><a href="User.php.html#79"><abbr title="App\Models\User::canAccess">canAccess</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="User.php.html#96"><abbr title="App\Models\User::getAllPermissions">getAllPermissions</abbr></a></td><td class="text-right">12</td></tr>
+       <tr><td><a href="User.php.html#54"><abbr title="App\Models\User::hasRole">hasRole</abbr></a></td><td class="text-right">4</td></tr>
+       <tr><td><a href="Role.php.html#42"><abbr title="App\Models\Role::hasPermission">hasPermission</abbr></a></td><td class="text-right">3</td></tr>
 
        </tbody>
       </table>
@@ -146,7 +159,7 @@
    <footer>
     <hr/>
     <p>
-     <small>Generated by <a href="https://github.com/sebastianbergmann/php-code-coverage" target="_top">php-code-coverage 11.0.9</a> using <a href="https://www.php.net/" target="_top">PHP 8.2.20</a> and <a href="https://phpunit.de/">PHPUnit 11.5.15</a> at Wed Apr 16 10:47:13 CST 2025.</small>
+     <small>Generated by <a href="https://github.com/sebastianbergmann/php-code-coverage" target="_top">php-code-coverage 11.0.9</a> using <a href="https://www.php.net/" target="_top">PHP 8.2.20</a> and <a href="https://phpunit.de/">PHPUnit 11.5.15</a> at Thu Apr 17 17:08:16 CST 2025.</small>
     </p>
    </footer>
   </div>
@@ -165,7 +178,7 @@ $(document).ready(function() {
       .yAxis.tickFormat(d3.format('d'));
 
     d3.select('#classCoverageDistribution svg')
-      .datum(getCoverageDistributionData([3,0,0,0,0,0,0,0,0,0,0,1], "Class Coverage"))
+      .datum(getCoverageDistributionData([3,0,0,0,0,1,1,0,0,0,0,1], "Class Coverage"))
       .transition().duration(500).call(chart);
 
     nv.utils.windowResize(chart.update);
@@ -183,7 +196,7 @@ $(document).ready(function() {
       .yAxis.tickFormat(d3.format('d'));
 
     d3.select('#methodCoverageDistribution svg')
-      .datum(getCoverageDistributionData([5,0,0,0,0,0,0,0,0,0,0,1], "Method Coverage"))
+      .datum(getCoverageDistributionData([10,0,0,0,0,0,0,0,0,2,0,6], "Method Coverage"))
       .transition().duration(500).call(chart);
 
     nv.utils.windowResize(chart.update);
@@ -233,7 +246,7 @@ $(document).ready(function() {
     chart.yAxis.axisLabel('Cyclomatic Complexity');
 
     d3.select('#classComplexity svg')
-      .datum(getComplexityData([[0,1,"<a href=\"Permission.php.html#8\">App\\Models\\Permission<\/a>"],[0,1,"<a href=\"Product.php.html#7\">App\\Models\\Product<\/a>"],[0,4,"<a href=\"Role.php.html#8\">App\\Models\\Role<\/a>"],[100,1,"<a href=\"User.php.html#9\">App\\Models\\User<\/a>"]], 'Class Complexity'))
+      .datum(getComplexityData([[0,1,"<a href=\"Entity.php.html#8\">App\\Models\\Entity<\/a>"],[0,1,"<a href=\"Permission.php.html#8\">App\\Models\\Permission<\/a>"],[100,2,"<a href=\"Product.php.html#9\">App\\Models\\Product<\/a>"],[50,7,"<a href=\"Role.php.html#8\">App\\Models\\Role<\/a>"],[0,3,"<a href=\"RoleEntityPermission.php.html#8\">App\\Models\\RoleEntityPermission<\/a>"],[41.37931034482759,14,"<a href=\"User.php.html#9\">App\\Models\\User<\/a>"]], 'Class Complexity'))
       .transition()
       .duration(500)
       .call(chart);
@@ -257,7 +270,7 @@ $(document).ready(function() {
     chart.yAxis.axisLabel('Method Complexity');
 
     d3.select('#methodComplexity svg')
-      .datum(getComplexityData([[0,1,"<a href=\"Permission.php.html#14\">App\\Models\\Permission::roles<\/a>"],[0,1,"<a href=\"Product.php.html#11\">App\\Models\\Product::casts<\/a>"],[0,1,"<a href=\"Role.php.html#14\">App\\Models\\Role::permissions<\/a>"],[0,1,"<a href=\"Role.php.html#19\">App\\Models\\Role::users<\/a>"],[0,2,"<a href=\"Role.php.html#25\">App\\Models\\Role::hasPermission<\/a>"],[100,1,"<a href=\"User.php.html#41\">App\\Models\\User::casts<\/a>"]], 'Method Complexity'))
+      .datum(getComplexityData([[0,1,"<a href=\"Entity.php.html#14\">App\\Models\\Entity::rolePermissions<\/a>"],[0,1,"<a href=\"Permission.php.html#14\">App\\Models\\Permission::roleEntityPermissions<\/a>"],[100,1,"<a href=\"Product.php.html#14\">App\\Models\\Product::casts<\/a>"],[100,1,"<a href=\"Product.php.html#20\">App\\Models\\Product::user<\/a>"],[0,1,"<a href=\"Role.php.html#14\">App\\Models\\Role::users<\/a>"],[100,1,"<a href=\"Role.php.html#19\">App\\Models\\Role::roleEntityPermissions<\/a>"],[0,1,"<a href=\"Role.php.html#25\">App\\Models\\Role::entities<\/a>"],[0,1,"<a href=\"Role.php.html#32\">App\\Models\\Role::getPermissionsForEntity<\/a>"],[87.5,3,"<a href=\"Role.php.html#42\">App\\Models\\Role::hasPermission<\/a>"],[0,1,"<a href=\"RoleEntityPermission.php.html#16\">App\\Models\\RoleEntityPermission::role<\/a>"],[0,1,"<a href=\"RoleEntityPermission.php.html#21\">App\\Models\\RoleEntityPermission::entity<\/a>"],[0,1,"<a href=\"RoleEntityPermission.php.html#26\">App\\Models\\RoleEntityPermission::permission<\/a>"],[100,1,"<a href=\"User.php.html#40\">App\\Models\\User::casts<\/a>"],[100,1,"<a href=\"User.php.html#48\">App\\Models\\User::role<\/a>"],[80,4,"<a href=\"User.php.html#54\">App\\Models\\User::hasRole<\/a>"],[100,2,"<a href=\"User.php.html#69\">App\\Models\\User::hasPermission<\/a>"],[0,3,"<a href=\"User.php.html#79\">App\\Models\\User::canAccess<\/a>"],[0,3,"<a href=\"User.php.html#96\">App\\Models\\User::getAllPermissions<\/a>"]], 'Method Complexity'))
       .transition()
       .duration(500)
       .call(chart);

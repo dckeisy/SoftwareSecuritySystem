@@ -5,9 +5,18 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RoleController;
 use Illuminate\Support\Facades\Route;
 
+// Ruta principal - accesible sin autenticación
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
+
+// Ruta para probar autenticación sin restricciones (para tests)
+Route::middleware(['auth'])->group(function () {
+    // Ruta de test para verificar la autorización
+    Route::get('/test-auth', function () {
+        return response()->json(['message' => 'Autorizado correctamente']);
+    })->middleware(['check.role:Auditor,Registrador,SuperAdmin'])->name('test.auth');
+});
 
 // Rutas del sistema - requieren autenticación
 Route::middleware(['auth'])->group(function () {

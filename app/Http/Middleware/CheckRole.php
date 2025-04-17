@@ -34,7 +34,7 @@ class CheckRole
         $roles = explode(',', $role);
         
         // Añadir log para depuración
-        Log::info('CheckRole: Verificando roles para usuario ' . $request->user()->name . ' con rol ' . $request->user()->role->name . ' (slug: ' . $request->user()->role->slug . ')');
+        Log::info('CheckRole: Verificando roles para usuario ' . $request->user()->username . ' con rol ' . $request->user()->role->name . ' (slug: ' . $request->user()->role->slug . ')');
         Log::info('CheckRole: Roles requeridos: ' . $role);
         
         // Verificar si el usuario tiene alguno de los roles especificados
@@ -52,6 +52,12 @@ class CheckRole
         if ($request->user()->role->name === 'SuperAdmin') {
             Log::info('CheckRole: Redirigiendo a dashboard (SuperAdmin)');
             return redirect()->route('dashboard');
+        } else if ($request->user()->role->name === 'Auditor') {
+            Log::info('CheckRole: Redirigiendo a userhome (Auditor)');
+            return redirect()->route('userhome');
+        } else if ($request->user()->role->name === 'Registrador') {
+            Log::info('CheckRole: Redirigiendo a userhome (Registrador)');
+            return redirect()->route('userhome');
         } else {
             // Cualquier otro rol (incluyendo los personalizados) se redirige a userhome
             Log::info('CheckRole: Redirigiendo a userhome (rol: ' . $request->user()->role->name . ')');

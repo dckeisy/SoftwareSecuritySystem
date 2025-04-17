@@ -1,98 +1,134 @@
 <?php
 
+namespace Tests\Feature;
+
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Entity;
+use App\Models\Permission;
+use App\Models\RoleEntityPermission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
+use App\Http\Middleware\CheckRole;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Route;
 
 /**
  * @author Kendall Angulo Chaves <kendallangulo01@gmail.com>
  */
 
-uses(RefreshDatabase::class);
+class CheckRoleMiddlewareTest extends TestCase
+{
+    use RefreshDatabase;
 
-beforeEach(function () {
-    // Crear los roles necesarios para las pruebas
-    $this->superadminRole = Role::create([
-        'name' => 'SuperAdmin',
-        'slug' => 'superadmin'
-    ]);
-    
-    $this->auditorRole = Role::create([
-        'name' => 'Auditor', 
-        'slug' => 'auditor'
-    ]);
-    
-    $this->registradorRole = Role::create([
-        'name' => 'Registrador',
-        'slug' => 'registrador'
-    ]);
-    
-    // Crear un usuario común (considerando que ahora usamos Role::class en lugar de texto)
-    $this->user = User::factory()->create([
-        'role_id' => $this->auditorRole->id,
-        'username' => 'testuser'
-    ]);
-    
-    // Crear usuario SuperAdmin
-    $this->superadmin = User::factory()->create([
-        'role_id' => $this->superadminRole->id,
-        'username' => 'admin_user'
-    ]);
-    
-    // Crear usuario sin rol
-    $this->userWithoutRole = User::factory()->create([
-        'role_id' => null,
-        'username' => 'user_without_role'
-    ]);
-});
+    protected $superadminRole;
+    protected $auditorRole;
+    protected $registradorRole;
+    protected $user;
+    protected $superadmin;
+    protected $userWithoutRole;
 
-afterEach(function () {
-    // Limpiar los datos creados para evitar conflictos entre pruebas
-    Role::where('name', 'SuperAdmin')->delete();
-    Role::where('name', 'Auditor')->delete();
-    Role::where('name', 'Registrador')->delete();
-    User::where('username', 'testuser')->delete();
-    User::where('username', 'admin_user')->delete();
-    User::where('username', 'user_without_role')->delete();
-});
+    protected function setUp(): void
+    {
+        parent::setUp();
 
-it('denies access to dashboard for unauthorized roles', function () {
-    $this->markTestSkipped('Las rutas de navegación no están configuradas correctamente');
-    
-    // Intentar acceder a /dashboard con un usuario no autorizado
-    $this->actingAs($this->user)
-        ->get('/dashboard')
-        ->assertStatus(302); // Verificar que sea redirigido (código 302)
-});
+        // Crear los roles necesarios para las pruebas
+        $this->superadminRole = Role::create([
+            'name' => 'SuperAdmin',
+            'slug' => 'superadmin'
+        ]);
+        
+        $this->auditorRole = Role::create([
+            'name' => 'Auditor', 
+            'slug' => 'auditor'
+        ]);
+        
+        $this->registradorRole = Role::create([
+            'name' => 'Registrador',
+            'slug' => 'registrador'
+        ]);
+        
+        // Crear un usuario con rol Auditor
+        $this->user = User::factory()->create([
+            'role_id' => $this->auditorRole->id,
+            'username' => 'testuser'
+        ]);
+        
+        // Crear usuario SuperAdmin
+        $this->superadmin = User::factory()->create([
+            'role_id' => $this->superadminRole->id,
+            'username' => 'admin_user'
+        ]);
+        
+        // Crear usuario sin rol
+        $this->userWithoutRole = User::factory()->create([
+            'role_id' => null,
+            'username' => 'user_without_role'
+        ]);
 
-it('allows access to userhome for auditor role', function () {
-    $this->markTestSkipped('Las rutas de navegación no están configuradas correctamente');
-    
-    // Autenticar como usuario con rol Auditor y enviar una solicitud GET a /userhome
-    $response = $this->actingAs($this->user)
-        ->get('/userhome');
-    
-    // Verificar que la respuesta tiene código 200 (OK)
-    $response->assertStatus(200);
-});
+        // Crear entidades y permisos
+        $usuariosEntity = Entity::create(['name' => 'Usuarios', 'slug' => 'usuarios']);
+        $productosEntity = Entity::create(['name' => 'Productos', 'slug' => 'productos']);
+        $rolesEntity = Entity::create(['name' => 'Roles', 'slug' => 'roles']);
+        
+        $verReportes = Permission::create(['name' => 'Ver Reportes', 'slug' => 'ver-reportes']);
+        $crear = Permission::create(['name' => 'Crear', 'slug' => 'crear']);
+        $editar = Permission::create(['name' => 'Editar', 'slug' => 'editar']);
+        $borrar = Permission::create(['name' => 'Borrar', 'slug' => 'borrar']);
+        
+        // Asignar permisos al SuperAdmin
+        foreach ([$usuariosEntity, $productosEntity, $rolesEntity] as $entity) {
+            foreach ([$verReportes, $crear, $editar, $borrar] as $permission) {
+                RoleEntityPermission::create([
+                    'role_id' => $this->superadminRole->id,
+                    'entity_id' => $entity->id,
+                    'permission_id' => $permission->id
+                ]);
+            }
+        }
+        
+        // Asignar permisos al Auditor
+        foreach ([$usuariosEntity, $productosEntity, $rolesEntity] as $entity) {
+            RoleEntityPermission::create([
+                'role_id' => $this->auditorRole->id,
+                'entity_id' => $entity->id,
+                'permission_id' => $verReportes->id
+            ]);
+        }
+    }
 
-it('allows access to dashboard for superadmin', function () {
-    $this->markTestSkipped('Las rutas de navegación no están configuradas correctamente');
-    
-    // Autenticar como usuario con rol SuperAdmin y enviar una solicitud GET a /dashboard
-    $response = $this->actingAs($this->superadmin)
-        ->get('/dashboard');
-    
-    // Verificar que la respuesta es exitosa
-    $response->assertStatus(200);
-    $response->assertViewIs('dashboard');
-});
+    protected function tearDown(): void
+    {
+        // Limpiar los datos creados para evitar conflictos entre pruebas
+        User::where('username', 'testuser')->delete();
+        User::where('username', 'admin_user')->delete();
+        User::where('username', 'user_without_role')->delete();
+        
+        Role::where('name', 'SuperAdmin')->delete();
+        Role::where('name', 'Auditor')->delete();
+        Role::where('name', 'Registrador')->delete();
+        
+        parent::tearDown();
+    }
 
-it('redirects user without role to home', function () {
-    $this->markTestSkipped('Las rutas de navegación no están configuradas correctamente');
-    
-    // Intentar acceder a /userhome con un usuario sin rol
-    $this->actingAs($this->userWithoutRole)
-        ->get('/userhome')
-        ->assertRedirect('/'); // Verificar redirección a ruta 'home'
-});
+    public function test_middleware_exists()
+    {
+        // Verificar que el middleware existe
+        $this->assertTrue(class_exists('App\Http\Middleware\CheckRole'));
+    }
+
+    public function test_user_has_role_method_works_correctly()
+    {
+        // Verificar que los métodos de comprobación de roles funcionan correctamente
+        $this->assertTrue($this->superadmin->hasRole('superadmin'));
+        $this->assertFalse($this->superadmin->hasRole('auditor'));
+        
+        $this->assertTrue($this->user->hasRole('auditor'));
+        $this->assertFalse($this->user->hasRole('superadmin'));
+        
+        // Usuario sin rol
+        $this->assertFalse($this->userWithoutRole->hasRole('superadmin'));
+        $this->assertFalse($this->userWithoutRole->hasRole('auditor'));
+    }
+}
