@@ -18,27 +18,27 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/dashboard', function () {
             return view('dashboard');
         })->name('dashboard');
-        
-        // Usuarios - CRUD
-        Route::middleware(['check.entity.permission:ver-reportes,usuarios'])->get('users', [RegisteredUserController::class, 'index'])->name('users.index');
-        Route::middleware(['check.entity.permission:crear,usuarios'])->get('users/create', [RegisteredUserController::class, 'create'])->name('users.create');
-        Route::middleware(['check.entity.permission:crear,usuarios'])->post('users', [RegisteredUserController::class, 'store'])->name('users.store');
-        Route::middleware(['check.entity.permission:editar,usuarios'])->get('users/{user}/edit', [RegisteredUserController::class, 'edit'])->name('users.edit');
-        Route::middleware(['check.entity.permission:editar,usuarios'])->put('users/{user}', [RegisteredUserController::class, 'update'])->name('users.update');
-        Route::middleware(['check.entity.permission:borrar,usuarios'])->delete('users/{user}', [RegisteredUserController::class, 'destroy'])->name('users.destroy');
-        
-        // Roles - CRUD
-        Route::middleware(['check.entity.permission:ver-reportes,roles'])->get('roles', [RoleController::class, 'index'])->name('roles.index');
-        Route::middleware(['check.entity.permission:crear,roles'])->get('roles/create', [RoleController::class, 'create'])->name('roles.create');
-        Route::middleware(['check.entity.permission:crear,roles'])->post('roles', [RoleController::class, 'store'])->name('roles.store');
-        Route::middleware(['check.entity.permission:editar,roles'])->get('roles/{role}/edit', [RoleController::class, 'edit'])->name('roles.edit');
-        Route::middleware(['check.entity.permission:editar,roles'])->put('roles/{role}', [RoleController::class, 'update'])->name('roles.update');
-        Route::middleware(['check.entity.permission:borrar,roles'])->delete('roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
-        
-        // Rutas adicionales para gestión de permisos
-        Route::middleware(['check.entity.permission:editar,roles'])->get('/roles/{role}/permissions', [RoleController::class, 'permissions'])->name('roles.permissions');
-        Route::middleware(['check.entity.permission:editar,roles'])->put('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])->name('roles.update_permissions');
     });
+
+    // Usuarios - CRUD
+    Route::middleware(['check.entity.permission:ver-reportes,usuarios'])->get('users', [RegisteredUserController::class, 'index'])->name('users.index');
+    Route::middleware(['check.entity.permission:crear,usuarios'])->get('users/create', [RegisteredUserController::class, 'create'])->name('users.create');
+    Route::middleware(['check.entity.permission:crear,usuarios'])->post('users', [RegisteredUserController::class, 'store'])->name('users.store');
+    Route::middleware(['check.entity.permission:editar,usuarios'])->get('users/{user}/edit', [RegisteredUserController::class, 'edit'])->name('users.edit');
+    Route::middleware(['check.entity.permission:editar,usuarios'])->put('users/{user}', [RegisteredUserController::class, 'update'])->name('users.update');
+    Route::middleware(['check.entity.permission:borrar,usuarios'])->delete('users/{user}', [RegisteredUserController::class, 'destroy'])->name('users.destroy');
+    
+    // Roles - CRUD
+    Route::middleware(['check.entity.permission:ver-reportes,roles'])->get('roles', [RoleController::class, 'index'])->name('roles.index');
+    Route::middleware(['check.entity.permission:crear,roles'])->get('roles/create', [RoleController::class, 'create'])->name('roles.create');
+    Route::middleware(['check.entity.permission:crear,roles'])->post('roles', [RoleController::class, 'store'])->name('roles.store');
+    Route::middleware(['check.entity.permission:editar,roles'])->get('roles/{role}/edit', [RoleController::class, 'edit'])->name('roles.edit');
+    Route::middleware(['check.entity.permission:editar,roles'])->put('roles/{role}', [RoleController::class, 'update'])->name('roles.update');
+    Route::middleware(['check.entity.permission:borrar,roles'])->delete('roles/{role}', [RoleController::class, 'destroy'])->name('roles.destroy');
+    
+    // Rutas adicionales para gestión de permisos
+    Route::middleware(['check.entity.permission:editar,roles'])->get('/roles/{role}/permissions', [RoleController::class, 'permissions'])->name('roles.permissions');
+    Route::middleware(['check.entity.permission:editar,roles'])->put('/roles/{role}/permissions', [RoleController::class, 'updatePermissions'])->name('roles.update_permissions');
 
     // Ruta para usuarios normales (Auditores, Registradores, etc.)
     Route::get('/userhome', function () {
