@@ -1,5 +1,4 @@
-@include('profile/partials.navuser')
-<x-user-layout>
+<x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
             {{ __('Editar Producto') }}
@@ -24,20 +23,22 @@
                         @csrf
                         @method('PUT')
 
-                        <label for="code" class="block">Código:</label>
-                        <input type="text" name="code" class="w-full p-2 rounded" value="{{ old('code', $product->code) }}" required>
+                        <x-input-label for="code" :value="__('Código:')" />
+                        <x-text-input id="code" class="block mt-1 w-full" type="text" name="code" :value="old('code',$product->code)" required />
 
-                        <label for="name" class="block mt-2">Nombre:</label>
-                        <input type="text" name="name" class="w-full p-2 rounded" value="{{ old('name', $product->name) }}" required>
+                        <x-input-label for="name" :value="__('Nombre:')" />
+                        <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name',$product->name)" required />
 
-                        <label for="description" class="block mt-2">Descripción:</label>
-                        <textarea name="description" class="w-full p-2 rounded" required>{{ old('description', $product->description) }}</textarea>
+                        <x-input-label for="description" :value="__('Descripción:')" />
+                        <x-text-area id="description" class="block mt-1 w-full" name="description" required>
+                            {{ old('description', $product->description) }}
+                        </x-text-area>
 
-                        <label for="quantity" class="block mt-2">Cantidad:</label>
-                        <input type="number" name="quantity" class="w-full p-2 rounded" value="{{ old('quantity', $product->quantity) }}" required>
+                        <x-input-label for="quantity" :value="__('Cantidad:')" />
+                        <x-text-input id="quantity" class="block mt-1 w-full" type="number" name="quantity" :value="old('quantity',$product->quantity)" required />
 
-                        <label for="price" class="block mt-2">Precio:</label>
-                        <input type="text" name="price" class="w-full p-2 rounded" value="{{ old('price', $product->price) }}" required>
+                        <x-input-label for="price" :value="__('Precio:')" />
+                        <x-text-input id="price" class="block mt-1 w-full" type="text" name="price" :value="old('price',$product->price)" required />
 
                         <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4">
                             Actualizar Producto
@@ -47,4 +48,4 @@
             </div>
         </div>
     </div>
-</x-user-layout>
+</x-app-layout>

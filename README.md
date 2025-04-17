@@ -53,3 +53,6 @@ En el siguiente sitio: https://nodejs.org/es
     npm run dev
 ```
 ![alt text](image-1.png)
+
+### Entorno de pruebas
+En el siguiente sitio : https://pestphp.com/docs/expectations

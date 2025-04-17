@@ -18,6 +18,7 @@ return new class extends Migration
             $table->text('description');
             $table->integer('quantity');
             $table->decimal('price', 8, 2);
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
             $table->timestamps();
         });
     }
