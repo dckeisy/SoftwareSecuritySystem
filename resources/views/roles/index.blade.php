@@ -45,22 +45,34 @@
                                     </td>
                                     <td class="py-2 px-4 border-b text-center">
                                         @if(Auth::user()->hasPermission('editar', 'roles'))
-                                        <a href="{{ route('roles.edit', $role->id) }}" class="text-blue-500">Editar</a>
+                                            @php
+                                                $isDefaultRole = in_array($role->name, ['SuperAdmin', 'Auditor', 'Registrador']);
+                                            @endphp
+                                            
+                                            @if($isDefaultRole)
+                                                <span class="text-gray-400 cursor-not-allowed">Editar</span>
+                                            @else
+                                                <a href="{{ route('roles.edit', $role->id) }}" class="text-blue-500">Editar</a>
+                                            @endif
                                         @endif
                                         
                                         @if(Auth::user()->hasPermission('borrar', 'roles'))
-                                        <form action="{{ route('roles.destroy', $role->id) }}" method="POST" class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit" class="text-red-500 ml-2">Eliminar</button>
-                                        </form>
+                                            @if(!in_array($role->name, ['SuperAdmin', 'Auditor', 'Registrador']))
+                                                <form action="{{ route('roles.destroy', $role->id) }}" method="POST" class="inline">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-red-500 ml-2">Eliminar</button>
+                                                </form>
+                                            @else
+                                                <span class="text-gray-400 cursor-not-allowed ml-2">Eliminar</span>
+                                            @endif
                                         @endif
                                     </td>
                                     <td class="py-2 px-4 border-b text-center">
                                         @if(Auth::user()->hasPermission('editar', 'roles'))
-                                        <a href="{{ route('roles.permissions', $role->id) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                                            Asignar Permisos
-                                        </a>
+                                            <a href="{{ route('roles.permissions', $role->id) }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                                                Asignar Permisos
+                                            </a>
                                         @endif
                                     </td>
                                 </tr>

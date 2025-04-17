@@ -20,44 +20,73 @@
 
                         <!-- Nombre -->
                         <div>
-                            <x-input-label for="name" :value="__('Nombre')" class="text-gray-800 dark:text-gray-100" />
-                            <select id="name" name="name" 
-                                class="block mt-1 w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600 rounded-md shadow-sm" 
-                                required>
-                                <option value="">Seleccione un rol</option>
-                                <option value="SuperAdmin" {{ old('name') == 'SuperAdmin' ? 'selected' : '' }}>SuperAdmin</option>
-                                <option value="Auditor" {{ old('name') == 'Auditor' ? 'selected' : '' }}>Auditor</option>
-                                <option value="Registrador" {{ old('name') == 'Registrador' ? 'selected' : '' }}>Registrador</option>
-                            </select>
+                            <x-input-label for="name" :value="__('Nombre del Rol')" class="text-gray-800 dark:text-gray-100" />
+                            <x-text-input id="name" class="block mt-1 w-full" type="text" name="name" :value="old('name')" required autofocus placeholder="Ingrese el nombre del rol" />
                             <x-input-error :messages="$errors->get('name')" class="mt-2" />
                         </div>
 
-                        <!-- Permisos por defecto para cada rol -->
-                        <div class="mt-6 bg-gray-100 dark:bg-gray-700 p-4 rounded-md">
-                            <h3 class="text-md font-medium mb-2">Permisos por Defecto:</h3>
-                            <div class="hidden" id="superadmin-permissions">
-                                <p class="font-bold mb-1">SuperAdmin:</p>
-                                <ul class="list-disc pl-6 mb-2 text-sm">
-                                    <li>Usuarios: Crear, Editar, Borrar, Ver Reportes</li>
-                                    <li>Roles: Crear, Editar, Borrar, Ver Reportes</li>
-                                    <li>Productos: Ver Reportes</li>
+                        <!-- Permisos por entidad -->
+                        <div class="mt-6">
+                            <h3 class="text-lg font-medium mb-4">Permisos</h3>
+                            <div class="mb-4 p-4 bg-blue-100 text-blue-700 rounded-md">
+                                <p class="font-medium">Información importante:</p>
+                                <ul class="list-disc pl-5 mt-1">
+                                    <li>El sistema asignará automáticamente permisos básicos (los mismos que tiene el rol Auditor).</li>
+                                    <li>Estos permisos básicos no se pueden quitar.</li>
+                                    <li>Seleccione permisos adicionales según las necesidades del rol.</li>
                                 </ul>
                             </div>
-                            <div class="hidden" id="auditor-permissions">
-                                <p class="font-bold mb-1">Auditor:</p>
-                                <ul class="list-disc pl-6 mb-2 text-sm">
-                                    <li>Usuarios: Ver Reportes</li>
-                                    <li>Productos: Ver Reportes</li>
-                                </ul>
-                            </div>
-                            <div class="hidden" id="registrador-permissions">
-                                <p class="font-bold mb-1">Registrador:</p>
-                                <ul class="list-disc pl-6 mb-2 text-sm">
-                                    <li>Usuarios: Ver Reportes</li>
-                                    <li>Productos: Crear, Editar, Borrar, Ver Reportes</li>
-                                </ul>
-                            </div>
-                            <p class="text-xs italic mt-2">Nota: Estos permisos se asignarán automáticamente y no podrán ser eliminados.</p>
+                            
+                            @foreach ($entities as $entity)
+                                <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-md">
+                                    <h4 class="font-semibold mb-2">{{ $entity->name }}</h4>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        @foreach ($permissions as $permission)
+                                            <div class="flex items-center">
+                                                @php
+                                                    // Verificar si es un permiso básico del Auditor
+                                                    $isAuditorPermission = false;
+                                                    
+                                                    // Emular la lógica del método getAuditorDefaultPermissions
+                                                    if (
+                                                        ($entity->slug == 'usuarios' && $permission->slug == 'ver-reportes') ||
+                                                        ($entity->slug == 'productos' && $permission->slug == 'ver-reportes')
+                                                    ) {
+                                                        $isAuditorPermission = true;
+                                                    }
+                                                @endphp
+                                                
+                                                @if ($isAuditorPermission)
+                                                    <input type="checkbox" 
+                                                        id="permission_{{ $entity->id }}_{{ $permission->id }}" 
+                                                        name="permissions[{{ $entity->id }}][]" 
+                                                        value="{{ $permission->id }}"
+                                                        checked
+                                                        disabled
+                                                        class="permission-checkbox rounded border-gray-300 dark:border-gray-600 text-blue-600 shadow-sm focus:ring-blue-500 opacity-50 cursor-not-allowed">
+                                                    <input type="hidden" 
+                                                        name="permissions[{{ $entity->id }}][]" 
+                                                        value="{{ $permission->id }}">
+                                                    <label for="permission_{{ $entity->id }}_{{ $permission->id }}" 
+                                                        class="ml-2 text-sm text-gray-500 dark:text-gray-400">
+                                                        {{ $permission->name }} <span class="text-xs">(Por defecto)</span>
+                                                    </label>
+                                                @else
+                                                    <input type="checkbox" 
+                                                        id="permission_{{ $entity->id }}_{{ $permission->id }}" 
+                                                        name="permissions[{{ $entity->id }}][]" 
+                                                        value="{{ $permission->id }}"
+                                                        class="permission-checkbox rounded border-gray-300 dark:border-gray-600 text-blue-600 shadow-sm focus:ring-blue-500">
+                                                    <label for="permission_{{ $entity->id }}_{{ $permission->id }}" 
+                                                        class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                                                        {{ $permission->name }}
+                                                    </label>
+                                                @endif
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endforeach
                         </div>
 
                         <!-- Botones -->
@@ -74,36 +103,4 @@
             </div>
         </div>
     </div>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const roleSelect = document.getElementById('name');
-            const superadminPermissions = document.getElementById('superadmin-permissions');
-            const auditorPermissions = document.getElementById('auditor-permissions');
-            const registradorPermissions = document.getElementById('registrador-permissions');
-            
-            // Mostrar los permisos por defecto del rol seleccionado
-            function showDefaultPermissions() {
-                // Ocultar todos
-                superadminPermissions.classList.add('hidden');
-                auditorPermissions.classList.add('hidden');
-                registradorPermissions.classList.add('hidden');
-                
-                // Mostrar según la selección
-                if (roleSelect.value === 'SuperAdmin') {
-                    superadminPermissions.classList.remove('hidden');
-                } else if (roleSelect.value === 'Auditor') {
-                    auditorPermissions.classList.remove('hidden');
-                } else if (roleSelect.value === 'Registrador') {
-                    registradorPermissions.classList.remove('hidden');
-                }
-            }
-            
-            // Inicializar la vista
-            showDefaultPermissions();
-            
-            // Evento al cambiar el rol
-            roleSelect.addEventListener('change', showDefaultPermissions);
-        });
-    </script>
 </x-app-layout>
