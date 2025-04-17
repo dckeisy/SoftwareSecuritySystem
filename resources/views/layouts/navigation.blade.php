@@ -12,13 +12,34 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                    <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                        {{ __('Dashboard') }}
-                    </x-nav-link>
+                    @if(auth()->user()->hasRole('superadmin'))
+                        <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                            {{ __('Dashboard') }}
+                        </x-nav-link>
+                    @else
+                        <x-nav-link :href="route('userhome')" :active="request()->routeIs('userhome')">
+                            {{ __('Inicio') }}
+                        </x-nav-link>
+                    @endif
 
-                    <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.index')">
-                        {{ __('Productos') }}
-                    </x-nav-link>
+                    @if(auth()->user()->hasPermission('ver-reportes', 'usuarios'))
+                        <x-nav-link :href="route('users.index')" :active="request()->routeIs('users.index')">
+                            {{ __('Usuarios') }}
+                        </x-nav-link>
+                    @endif
+
+                    @if(auth()->user()->hasPermission('ver-reportes', 'roles'))
+                        <x-nav-link :href="route('roles.index')" :active="request()->routeIs('roles.index')">
+                            {{ __('Roles') }}
+                        </x-nav-link>
+                    @endif
+
+                    @if(auth()->user()->canAccess('productos'))
+                        <x-nav-link :href="route('products.index')" :active="request()->routeIs('products.index')">
+                            {{ __('Productos') }}
+                        </x-nav-link>
+                    @endif
+
                 </div>
             </div>
 
@@ -38,17 +59,6 @@
                     </x-slot>
 
                     <x-slot name="content">
-                        <x-dropdown-link :href="route('users.index')">
-                            {{ __('Usuarios') }}
-                        </x-dropdown-link>
-                        <x-dropdown-link :href="route('roles.index')">
-                            {{ __('Roles') }}
-                        </x-dropdown-link>
-
-                        <x-dropdown-link :href="route('products.index')">
-                            {{ __('Productos') }}
-                        </x-dropdown-link>
-
                         <!-- Authentication -->
                         <form method="POST" action="{{ route('logout') }}">
                             @csrf
@@ -77,9 +87,21 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden">
         <div class="pt-2 pb-3 space-y-1">
-            <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
-                {{ __('Dashboard') }}
-            </x-responsive-nav-link>
+            @if(auth()->user()->hasRole('superadmin'))
+                <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
+                    {{ __('Dashboard') }}
+                </x-responsive-nav-link>
+            @else
+                <x-responsive-nav-link :href="route('userhome')" :active="request()->routeIs('userhome')">
+                    {{ __('Inicio') }}
+                </x-responsive-nav-link>
+            @endif
+
+            @if(auth()->user()->canAccess('productos'))
+                <x-responsive-nav-link :href="route('products.index')" :active="request()->routeIs('products.index')">
+                    {{ __('Productos') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->
@@ -89,13 +111,23 @@
             </div>
 
             <div class="mt-3 space-y-1">
-                <x-dropdown-link :href="route('users.index')">
-                    {{ __('Usuarios') }}
-                </x-dropdown-link>
+                @if(auth()->user()->hasPermission('ver-reportes', 'usuarios'))
+                    <x-responsive-nav-link :href="route('users.index')">
+                        {{ __('Usuarios') }}
+                    </x-responsive-nav-link>
+                @endif
+
+                @if(auth()->user()->hasPermission('ver-reportes', 'roles'))
+                    <x-responsive-nav-link :href="route('roles.index')">
+                        {{ __('Roles') }}
+                    </x-responsive-nav-link>
+                @endif
                 
-                <x-dropdown-link :href="route('products.index')">
-                            {{ __('Productos') }}
-                </x-dropdown-link>
+                @if(auth()->user()->canAccess('productos'))
+                    <x-responsive-nav-link :href="route('products.index')">
+                        {{ __('Productos') }}
+                    </x-responsive-nav-link>
+                @endif
 
                 <!-- Authentication -->
                 <form method="POST" action="{{ route('logout') }}">
@@ -104,7 +136,7 @@
                     <x-responsive-nav-link :href="route('logout')"
                             onclick="event.preventDefault();
                                         this.closest('form').submit();">
-                        {{ __('Log Out') }}
+                        {{ __('Cerrar Sesión') }}
                     </x-responsive-nav-link>
                 </form>
             </div>
