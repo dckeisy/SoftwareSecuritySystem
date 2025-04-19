@@ -29,7 +29,7 @@ class PermissionSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::create([
+            Permission::firstOrCreate([ // Evitar duplicados en la base de datos
                 'name' => $permission['name'],
                 'slug' => Str::slug($permission['name'])
             ]);
