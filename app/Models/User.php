@@ -5,7 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Collection;
 
+/**
+ * Class User
+ * 
+ * Modelo que representa a los usuarios del sistema
+ * 
+ * @package App\Models
+ */
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
@@ -45,13 +54,23 @@ class User extends Authenticatable
         ];
     }
 
-    public function role()
+    /**
+     * Relación con el modelo Role
+     * 
+     * @return BelongsTo
+     */
+    public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
     }
 
-    // Check if the user has a specific role
-    public function hasRole($role)
+    /**
+     * Verifica si el usuario tiene un rol específico
+     * 
+     * @param string|Role $role
+     * @return bool
+     */
+    public function hasRole($role): bool
     {
         if (!$this->role) {
             return false;
@@ -65,8 +84,14 @@ class User extends Authenticatable
         return $role->id === $this->role_id;
     }
 
-    // Check if the user has a specific permission for an entity
-    public function hasPermission($permission, $entity)
+    /**
+     * Verifica si el usuario tiene un permiso específico para una entidad
+     * 
+     * @param string|Permission $permission
+     * @param string|Entity $entity
+     * @return bool
+     */
+    public function hasPermission($permission, $entity): bool
     {
         if (!$this->role) {
             return false;
@@ -75,14 +100,20 @@ class User extends Authenticatable
         return $this->role->hasPermission($permission, $entity);
     }
 
-    // Check if the user can access an entity (has some permission on it)
-    public function canAccess($entity)
+    /**
+     * Verifica si el usuario puede acceder a una entidad (tiene algún permiso sobre ella)
+     * 
+     * @param string|Entity $entity
+     * @return bool
+     */
+    public function canAccess($entity): bool
     {
         if (!$this->role) {
             return false;
         }
         
-        $entityObj = Entity::where('slug', $entity)->first();
+        $entityObj = is_string($entity) ? Entity::where('slug', $entity)->first() : $entity;
+        
         if (!$entityObj) {
             return false;
         }
@@ -92,7 +123,11 @@ class User extends Authenticatable
             ->exists();
     }
     
-    // Get all permissions that the user has through their role
+    /**
+     * Obtiene todos los permisos que el usuario tiene a través de su rol
+     * 
+     * @return Collection|array
+     */
     public function getAllPermissions()
     {
         if (!$this->role) {
