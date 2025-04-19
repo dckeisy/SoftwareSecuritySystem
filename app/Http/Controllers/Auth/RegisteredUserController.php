@@ -30,6 +30,9 @@ class RegisteredUserController extends Controller
                 ->setTimezone(config('app.timezone'))
                 ->format('Y-m-d H:i:s');  // Cambiamos el formato a 'año-mes-día' que es más estándar
             }
+            // Escapamos datos para prevenir XSS
+            $user->username = e($user->username);
+
         }
     
         return view("auth.users.index", compact("users"));
@@ -38,21 +41,7 @@ class RegisteredUserController extends Controller
     public function create(): View
     {
         $roles = Role::all();
-        
-        // Preparar los datos de roles para JavaScript
-        $rolesData = [];
-        foreach ($roles as $role) {
-            $permissions = [];
-            foreach ($role->entities() as $entity) {
-                $permissions[$entity->name] = $role->getPermissionsForEntity($entity->id)->pluck('name')->toArray();
-            }
-            $rolesData[$role->id] = [
-                'name' => $role->name,
-                'permissions' => $permissions
-            ];
-        }
-        
-        return view('auth.users.create', compact('roles', 'rolesData')); 
+        return view('auth.users.create', compact('roles'));
     }
 
     /**
@@ -61,27 +50,42 @@ class RegisteredUserController extends Controller
      * @throws \Illuminate\Validation\ValidationException
      */
     public function store(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'username' => ['required', 'string', 'max:255', 'unique:users,username'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            'role_id' => ['required', 'exists:roles,id'],
+{
+    try {
+        $validated = $request->validate([
+            'username' => [
+                'required', 
+                'string', 
+                'max:255', 
+                'unique:users,username',
+                'regex:/^[a-zA-Z0-9_.-]+$/'
+            ],
+            'password' => [
+                'required', 
+                'confirmed', 
+                Rules\Password::min(10)
+                    ->mixedCase()
+                    ->numbers()
+                    ->symbols()
+                    ->uncompromised()
+            ],
+            'role_id' => ['required', 'integer', 'exists:roles,id'],
         ]);
 
-        try {
-            $user = User::create([
-                'username' => $request->username,
-                'password' => Hash::make($request->password),
-                'role_id' => $request->role_id,
-            ]);
+        $user = User::create([
+            'username' => trim($validated['username']),
+            'password' => Hash::make($validated['password']),
+            'role_id' => (int)$validated['role_id'],
+        ]);
 
-            event(new Registered($user));
-
-            return redirect()->route('users.index')->with('success', 'Usuario creado correctamente.');
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error al crear el usuario: ' . $e->getMessage())->withInput();
-        }
+        event(new Registered($user));
+        
+        return redirect()->route('users.index')->with('success', 'Usuario creado correctamente.');
+    } catch (\Exception $e) {
+        return redirect()->back()->with('error', 'Error al crear el usuario: ' . $e->getMessage())->withInput();
     }
+}
+
 
     public function edit(User $user): View
     {
@@ -91,23 +95,45 @@ class RegisteredUserController extends Controller
     
     public function update(Request $request, User $user): RedirectResponse
     {
-        $request->validate([
-            'username' => ['required', 'string', 'max:255', 'unique:users,username,' . $user->id . ',id'],
-            'role_id' => ['required', 'exists:roles,id'],
-        ]);
-
         try {
-            $user->username = $request->username;
-            $user->role_id = $request->role_id;
+         // Validamos los datos
+         $validated = $request->validate([
+            'username' => [
+                'required', 
+                'string', 
+                'max:255', 
+                'unique:users,username,' . $user->id . ',id',
+                'regex:/^[a-zA-Z0-9_.-]+$/' // Solo permitir alfanuméricos y caracteres limitados
+            ],
+            'role_id' => ['required', 'integer', 'exists:roles,id'],
+        ]);
+      
+        // Actualizamos con datos sanitizados
+        $user->username = trim($validated['username']);
+        $user->role_id = (int)$validated['role_id'];
 
-            if ($request->filled('password')) {
-                $request->validate([
-                    'password' => ['confirmed', Rules\Password::defaults()],
-                ]);
-                $user->password = Hash::make($request->password);
-            }
+        // Opcional actualización de contraseña
+        if ($request->filled('password')) {
+            $passwordValidated = $request->validate([
+                'password' => [
+                    'confirmed', 
+                    Rules\Password::min(10)
+                        ->mixedCase()
+                        ->numbers()
+                        ->symbols()
+                        ->uncompromised()
+                ],
+            ]);
+            
+            $user->password = Hash::make($passwordValidated['password']);
+        }
 
-            $user->save();
+        $user->save();
+        
+        // Regeneramos sesión SOLO si el usuario está modificando su propio perfil
+        if (Auth::id() === $user->id) {
+            $request->session()->regenerate();
+        }
 
             return redirect()->route('users.index')->with('success', 'Usuario actualizado correctamente.');
         } catch (\Exception $e) {
@@ -117,16 +143,13 @@ class RegisteredUserController extends Controller
 
     public function destroy(User $user): RedirectResponse
     {
-        try {
-            // Verificar que no se esté eliminando al usuario actual
-            if (Auth::id() === $user->id) {
-                return redirect()->route('users.index')->with('error', 'No puede eliminar su propio usuario.');
-            }
-            
-            $user->delete();
-            return redirect()->route('users.index')->with('success', 'Usuario eliminado correctamente.');
-        } catch (\Exception $e) {
-            return redirect()->route('users.index')->with('error', 'Error al eliminar el usuario: ' . $e->getMessage());
+         // Evitamos que un usuario se elimine a sí mismo
+         if ($user->id === Auth::id()) {
+            return redirect()->route('users.index')
+                ->with('error', 'No puedes eliminar tu propio usuario.');
         }
+      
+        $user->delete();
+        return redirect()->route('users.index')->with('success', 'Usuario eliminado.');
     }
 }
