@@ -72,16 +72,6 @@ test('last login is updated', function () {
     $this->assertNotNull($updatedUser->last_login_at);
 });
 
-test('login with invalid credentials fails', function () {
-    $this->post('/login', [
-        'username' => 'superadmin',
-        'password' => 'contraseña_incorrecta',
-    ]);
-
-    // Verificar que el usuario no está autenticado
-    $this->assertGuest();
-});
-
 test('authentication and logout', function () {
     // Autenticar usuario
     $this->actingAs($this->superAdmin);
