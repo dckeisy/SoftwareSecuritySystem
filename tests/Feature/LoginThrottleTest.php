@@ -11,10 +11,10 @@ use App\Models\Role;
 it('throws a ValidationException after many unsuccessful attempts', function () {
     // Crear un rol para el usuario
     $role = Role::create([
-        'name' => 'TestRole',
-        'slug' => 'testrole'
+        'name' => 'SuperAdmin',
+        'slug' => 'superAdmin'
     ]);
-    
+
     // Crear un usuario para las pruebas
     $user = User::factory()->create([
         'role_id' => $role->id
@@ -33,10 +33,10 @@ it('throws a ValidationException after many unsuccessful attempts', function () 
         'username' => $user->username,
         'password' => 'wrong-password',
     ]);
-    
+
     // Esperamos una redirección (código 302) debido a la validación fallida
     $this->assertEquals(302, $response->status());
-    
+
     // Limpieza
     $user->delete();
     $role->delete();
