@@ -9,12 +9,17 @@ use Illuminate\Support\Facades\Auth;
 class ProductController extends Controller
 {
    public function index()
-   {
-    $products = Product::all();
-    if (request()->wantsJson()) {
-        return response()->json(['products' => $products], 200);
-    }
-    return view("products.index", compact("products"));
+   {         
+        $products = Product::all();
+        
+        // Escapar datos para evitar XSS
+        foreach ($products as $product) {
+            $product->name = e($product->name);
+            $product->description = e($product->description);
+            $product->code = e($product->code);
+        }
+        
+        return view("products.index", compact("products"));
    }
 
    public function create()
@@ -23,45 +28,118 @@ class ProductController extends Controller
    }
    public function store(Request $request)
    {
+    
+    // Validación extendida para seguridad
     $validated = $request->validate([
-        'code' => 'required|string|max:10|unique:products,code',
-        'name' => 'required|string|max:255',
-        'description' => 'nullable|string|max:500',
-        'quantity' => 'required|integer|min:0',
-        'price' => 'required|numeric|min:0',
+        'code' => [
+            'required',
+            'unique:products,code',
+            'regex:/^[a-zA-Z0-9_-]+$/', // Solo permitir caracteres seguros
+            'max:50'
+        ],
+        'name' => [
+            'required',
+            'string',
+            'max:255',
+            'regex:/^[a-zA-Z0-9\s.,_-]+$/' // Permitir solo caracteres seguros
+        ],
+        'description' => [
+            'required',
+            'string',
+            'max:1000',
+            'regex:/^[\w\s\.,!?()\-&]+$/' // Solo permitir caracteres seguros
+        ],
+        'quantity' => [
+            'required',
+            'integer',
+            'min:0',
+            'max:999999' // Establecer límites razonables
+        ],
+        'price' => [
+            'required',
+            'numeric',
+            'min:0',
+            'max:999999.99' // Establecer límites razonables
+        ],
     ]);
-
-    $validated['user_id'] = Auth::user()->id;
-
-    $product = Product::create($validated);
-    if ($request->wantsJson()) {
-        return response()->json(['message' => 'Producto creado.'], 201);
-    }
+    
+    // Crear producto con datos sanitizados
+    $product = Product::create([
+        'code' => trim($validated['code']),
+        'name' => trim($validated['name']),
+        'description' => trim($validated['description']),
+        'quantity' => (int)$validated['quantity'],
+        'price' => (float)$validated['price'],
+    ]);
+    
     return redirect()->route('products.index')->with('success','Producto creado.');
 
    }
    public function edit(Product $product)
    {
-    if (request()->wantsJson()) {
-        return response()->json(['product' => $product], 200);
-    }
+    // Sanitizar datos para la vista
+    $product->name = e($product->name);
+    $product->description = e($product->description);
+    $product->code = e($product->code);
+
     return view('products.edit', compact('product'));
    }
    public function update(Request $request, Product $product)
    {
-    $request->validate([
-        'code' => 'required|unique:products,code,'.$product->id,
-        'name' => 'required',
-        'description' => 'required',
-        'quantity' => 'required|integer',
-        'price' => 'required|numeric',
+    
+     // Validación extendida para seguridad
+     $validated = $request->validate([
+        'code' => [
+            'required',
+            'unique:products,code,' . $product->id,
+            'regex:/^[a-zA-Z0-9_-]+$/', // Solo permitir caracteres seguros
+            'max:50'
+        ],
+        'name' => [
+            'required',
+            'string',
+            'max:255',
+            'regex:/^[a-zA-Z0-9\s.,_-]+$/' // Permitir solo caracteres seguros
+        ],
+        'description' => [
+            'required',
+            'string',
+            'max:1000',
+            'regex:/^[\w\s\.,!?()\-&]+$/' // Solo permitir caracteres seguros
+        ],
+        'quantity' => [
+            'required',
+            'integer',
+            'min:0',
+            'max:999999' // Establecer límites razonables
+        ],
+        'price' => [
+            'required',
+            'numeric',
+            'min:0',
+            'max:999999.99' // Establecer límites razonables
+        ],
     ]);
-    $product->update($request->all());
+
+    // Actualizar con datos sanitizados
+    $product->update([
+        'code' => trim($validated['code']),
+        'name' => trim($validated['name']),
+        'description' => trim($validated['description']),
+        'quantity' => (int)$validated['quantity'],
+        'price' => (float)$validated['price'],
+    ]);
+ 
     return redirect()->route('products.index')->with('success','Producto actualizado.');
+
    }
    public function destroy(Product $product)
    {
-    $product->delete();
+
+    $product->delete(); 
+
     return redirect()->route('products.index')->with('success','Producto eliminado.');
+
    }
+
 }
