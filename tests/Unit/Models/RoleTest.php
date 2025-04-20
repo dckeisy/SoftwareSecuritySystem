@@ -11,6 +11,7 @@ use App\Models\RoleEntityPermission;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Collection;
 use Mockery;
+use stdClass;
 
 class RoleTest extends TestCase
 {
@@ -75,55 +76,54 @@ class RoleTest extends TestCase
     /** @test */
     public function it_can_get_entities()
     {
-        // Create a mock for Role with a partially mocked roleEntityPermissions method
+        // Create collections for expected data
+        $entityIds = collect([1, 2, 3]);
+        $expectedEntities = new Collection([
+            Mockery::mock(Entity::class),
+            Mockery::mock(Entity::class)
+        ]);
+
+        // Create a mock for Role
         $role = Mockery::mock(Role::class)->makePartial();
         
-        // Mock what roleEntityPermissions()->pluck() would return
+        // Mock the relationships and query builders
         $relationship = Mockery::mock(HasMany::class);
         $relationship->shouldReceive('pluck')
             ->with('entity_id')
             ->once()
-            ->andReturn(collect([1, 2, 3])->unique());
+            ->andReturn($entityIds->unique());
         
         $role->shouldReceive('roleEntityPermissions')
             ->once()
             ->andReturn($relationship);
-            
-        // Mock the Entity model's static methods
-        $entities = collect([
-            Mockery::mock(Entity::class),
-            Mockery::mock(Entity::class)
-        ]);
         
-        // Use Mockery's built-in aliases
-        Entity::shouldReceive('whereIn')
-            ->with('id', Mockery::on(function($collection) {
-                // Check if the collection contains the expected values
-                return $collection->all() === [1, 2, 3];
+        // Mock the query builder method that can't use alias mocking
+        $role->shouldReceive('getEntitiesQuery')
+            ->once()
+            ->with(Mockery::on(function($ids) use ($entityIds) {
+                return $ids->all() === $entityIds->all();
             }))
-            ->once()
-            ->andReturnSelf();
-            
-        Entity::shouldReceive('get')
-            ->once()
-            ->andReturn($entities);
-            
-        // Call the method
-        $result = $role->entities();
+            ->andReturn($expectedEntities);
         
-        // Assert that the result is the expected collection
-        $this->assertSame($entities, $result);
+        // Call the method and assert
+        $result = $role->entities();
+        $this->assertSame($expectedEntities, $result);
     }
 
     /** @test */
     public function it_can_get_permissions_for_entity()
     {
         $entityId = 1;
+        $permissionIds = collect([1, 2, 3]);
+        $expectedPermissions = new Collection([
+            Mockery::mock(Permission::class),
+            Mockery::mock(Permission::class)
+        ]);
         
-        // Create a mock for Role with a partially mocked roleEntityPermissions method
+        // Create a mock for Role
         $role = Mockery::mock(Role::class)->makePartial();
         
-        // Mock the roleEntityPermissions() relationship and its chain methods
+        // Mock the relationship and chain methods
         $relationship = Mockery::mock(HasMany::class);
         $relationship->shouldReceive('where')
             ->with('entity_id', $entityId)
@@ -133,104 +133,93 @@ class RoleTest extends TestCase
         $relationship->shouldReceive('pluck')
             ->with('permission_id')
             ->once()
-            ->andReturn(collect([1, 2, 3]));
+            ->andReturn($permissionIds);
             
         $role->shouldReceive('roleEntityPermissions')
             ->once()
             ->andReturn($relationship);
             
-        // Mock the Permission model's static methods
-        $permissions = collect([
-            Mockery::mock(Permission::class),
-            Mockery::mock(Permission::class)
-        ]);
-        
-        Permission::shouldReceive('whereIn')
-            ->with('id', Mockery::on(function($collection) {
-                return $collection->all() === [1, 2, 3];
+        // Mock the query builder method
+        $role->shouldReceive('getPermissionsQuery')
+            ->once()
+            ->with(Mockery::on(function($ids) use ($permissionIds) {
+                return $ids->all() === $permissionIds->all();
             }))
-            ->once()
-            ->andReturnSelf();
+            ->andReturn($expectedPermissions);
             
-        Permission::shouldReceive('get')
-            ->once()
-            ->andReturn($permissions);
-            
-        // Call the method
+        // Call and test
         $result = $role->getPermissionsForEntity($entityId);
-        
-        // Assert that the result is the expected collection
-        $this->assertSame($permissions, $result);
+        $this->assertSame($expectedPermissions, $result);
     }
 
     /** @test */
     public function it_returns_false_when_checking_permission_with_non_existent_entity()
     {
-        // Create a mock for the Entity model's static methods
-        Entity::shouldReceive('where')
-            ->with('slug', 'non-existent')
-            ->once()
-            ->andReturnSelf();
-            
-        Entity::shouldReceive('first')
+        // Create a Role mock
+        $role = Mockery::mock(Role::class)->makePartial();
+        
+        // Mock the entity finder method
+        $role->shouldReceive('findEntityBySlug')
+            ->with('non-existent')
             ->once()
             ->andReturnNull();
             
-        // Call the method
-        $result = $this->role->hasPermission('view', 'non-existent');
-        
-        // Assert that the result is false
+        // Call and test
+        $result = $role->hasPermission('view', 'non-existent');
         $this->assertFalse($result);
     }
 
     /** @test */
     public function it_returns_false_when_checking_permission_with_non_existent_permission()
     {
-        // Mock entity
-        $entity = Mockery::mock(Entity::class);
+        // Create a simple object instead of mocking Entity
+        $entity = new stdClass();
         $entity->id = 1;
         
-        // Create a mock for the Entity model's static methods
-        Entity::shouldReceive('where')
-            ->with('slug', 'users')
-            ->once()
-            ->andReturnSelf();
-            
-        Entity::shouldReceive('first')
+        // Create a Role mock
+        $role = Mockery::mock(Role::class)->makePartial();
+        
+        // Configure mock behaviors
+        $role->shouldReceive('findEntityBySlug')
+            ->with('users')
             ->once()
             ->andReturn($entity);
             
-        // Create a mock for the Permission model's static methods
-        Permission::shouldReceive('where')
-            ->with('slug', 'non-existent')
-            ->once()
-            ->andReturnSelf();
-            
-        Permission::shouldReceive('first')
+        $role->shouldReceive('findPermissionBySlug')
+            ->with('non-existent')
             ->once()
             ->andReturnNull();
             
-        // Call the method
-        $result = $this->role->hasPermission('non-existent', 'users');
-        
-        // Assert that the result is false
+        // Call and test
+        $result = $role->hasPermission('non-existent', 'users');
         $this->assertFalse($result);
     }
 
     /** @test */
     public function it_returns_true_when_role_has_permission_for_entity()
     {
-        // Mock entity and permission
-        $entity = Mockery::mock(Entity::class);
+        // Create simple objects instead of mocks
+        $entity = new stdClass();
         $entity->id = 1;
         
-        $permission = Mockery::mock(Permission::class);
+        $permission = new stdClass();
         $permission->id = 1;
         
-        // Create a mock for Role with a partially mocked roleEntityPermissions method
+        // Create a Role mock
         $role = Mockery::mock(Role::class)->makePartial();
         
-        // Mock the roleEntityPermissions() relationship and its chain methods
+        // Configure mock behaviors
+        $role->shouldReceive('findEntityBySlug')
+            ->with('users')
+            ->once()
+            ->andReturn($entity);
+            
+        $role->shouldReceive('findPermissionBySlug')
+            ->with('view')
+            ->once()
+            ->andReturn($permission);
+            
+        // Mock the relationship chain
         $relationship = Mockery::mock(HasMany::class);
         $relationship->shouldReceive('where')
             ->with('entity_id', $entity->id)
@@ -250,46 +239,36 @@ class RoleTest extends TestCase
             ->once()
             ->andReturn($relationship);
             
-        // Create mocks for the Entity and Permission model's static methods
-        Entity::shouldReceive('where')
-            ->with('slug', 'users')
-            ->once()
-            ->andReturnSelf();
-            
-        Entity::shouldReceive('first')
-            ->once()
-            ->andReturn($entity);
-            
-        Permission::shouldReceive('where')
-            ->with('slug', 'view')
-            ->once()
-            ->andReturnSelf();
-            
-        Permission::shouldReceive('first')
-            ->once()
-            ->andReturn($permission);
-            
-        // Call the method
+        // Call and test
         $result = $role->hasPermission('view', 'users');
-        
-        // Assert that the result is true
         $this->assertTrue($result);
     }
 
     /** @test */
     public function it_returns_false_when_role_does_not_have_permission_for_entity()
     {
-        // Mock entity and permission
-        $entity = Mockery::mock(Entity::class);
+        // Create simple objects instead of mocks
+        $entity = new stdClass();
         $entity->id = 1;
         
-        $permission = Mockery::mock(Permission::class);
+        $permission = new stdClass();
         $permission->id = 1;
         
-        // Create a mock for Role with a partially mocked roleEntityPermissions method
+        // Create a Role mock
         $role = Mockery::mock(Role::class)->makePartial();
         
-        // Mock the roleEntityPermissions() relationship and its chain methods
+        // Configure mock behaviors
+        $role->shouldReceive('findEntityBySlug')
+            ->with('users')
+            ->once()
+            ->andReturn($entity);
+            
+        $role->shouldReceive('findPermissionBySlug')
+            ->with('view')
+            ->once()
+            ->andReturn($permission);
+            
+        // Mock the relationship chain
         $relationship = Mockery::mock(HasMany::class);
         $relationship->shouldReceive('where')
             ->with('entity_id', $entity->id)
@@ -309,29 +288,8 @@ class RoleTest extends TestCase
             ->once()
             ->andReturn($relationship);
             
-        // Create mocks for the Entity and Permission model's static methods
-        Entity::shouldReceive('where')
-            ->with('slug', 'users')
-            ->once()
-            ->andReturnSelf();
-            
-        Entity::shouldReceive('first')
-            ->once()
-            ->andReturn($entity);
-            
-        Permission::shouldReceive('where')
-            ->with('slug', 'view')
-            ->once()
-            ->andReturnSelf();
-            
-        Permission::shouldReceive('first')
-            ->once()
-            ->andReturn($permission);
-            
-        // Call the method
+        // Call and test
         $result = $role->hasPermission('view', 'users');
-        
-        // Assert that the result is false
         $this->assertFalse($result);
     }
-} 
+}
