@@ -89,43 +89,48 @@ class RegisteredUserController extends Controller
 
     public function edit(User $user): View
     {
+        $user->username = e($user->username);
         $roles = Role::all();
         return view('auth.users.edit', compact('user', 'roles'));
     }
 
     public function update(Request $request, User $user): RedirectResponse
     {
-        try {
-            $validated = $request->validate([
-                'username' => [
-                    'required',
-                    'string',
-                    'max:255',
-                    'unique:users,username,' . $user->id . ',id',
-                    'regex:/^[a-zA-Z0-9_.-]+$/'
+        // Validate input; ValidationException will bubble on failure
+        $validated = $request->validate([
+            'username' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:users,username,' . $user->id . ',id',
+                'regex:/^[a-zA-Z0-9_.-]+$/'
+            ],
+            'role_id' => ['required', 'integer', 'exists:roles,id'],
+        ]);
+
+        // Assign validated data
+        $user->username = trim($validated['username']);
+        $user->role_id = (int)$validated['role_id'];
+
+        // If password provided, validate and hash
+        if ($request->filled('password')) {
+            $pwd = $request->validate([
+                'password' => [
+                    'confirmed',
+                    Rules\Password::min(10)
+                        ->mixedCase()
+                        ->numbers()
+                        ->symbols()
+                        ->uncompromised()
                 ],
-                'role_id' => ['required', 'integer', 'exists:roles,id'],
             ]);
+            $user->password = Hash::make($pwd['password']);
+        }
 
-            $user->username = trim($validated['username']);
-            $user->role_id = (int)$validated['role_id'];
-
-            if ($request->filled('password')) {
-                $pwd = $request->validate([
-                    'password' => [
-                        'confirmed',
-                        Rules\Password::min(10)
-                            ->mixedCase()
-                            ->numbers()
-                            ->symbols()
-                            ->uncompromised()
-                    ],
-                ]);
-                $user->password = Hash::make($pwd['password']);
-            }
-
+        try {
             $user->save();
 
+            // Regenerate session if the authenticated user updated their own profile
             if (Auth::id() === $user->id) {
                 $request->session()->regenerate();
             }
@@ -133,6 +138,7 @@ class RegisteredUserController extends Controller
             return redirect()->route('users.index')
                 ->with('success', 'Usuario actualizado correctamente.');
         } catch (\Exception $e) {
+            // Unexpected errors
             return redirect()->back()
                 ->with('error', 'Error al actualizar el usuario: ' . $e->getMessage())
                 ->withInput();

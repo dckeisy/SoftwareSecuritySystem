@@ -240,6 +240,9 @@ class RoleController extends Controller
 
 public function permissions(Role $role)
     {
+        $role->name = e($role->name);
+        $role->slug = e($role->slug);
+
         // Cargar entidades y permisos
         $entities    = Entity::all();
         $permissions = Permission::all();
