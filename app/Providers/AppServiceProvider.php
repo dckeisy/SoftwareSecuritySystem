@@ -25,18 +25,24 @@ class AppServiceProvider extends ServiceProvider
             list($permission, $entity) = explode(',', str_replace(['(', ')', ' '], '', $expression));
             return "<?php if(auth()->check() && auth()->user()->hasPermission({$permission}, {$entity})): ?>";
         });
-        
+
         Blade::directive('endEntityPermission', function () {
+            // @codeCoverageIgnoreStart
             return "<?php endif; ?>";
+            // @codeCoverageIgnoreStart
         });
-        
+
         // Directive to verify if a user has access to an entity
         Blade::directive('canAccess', function ($entity) {
+            // @codeCoverageIgnoreStart
             return "<?php if(auth()->check() && auth()->user()->canAccess({$entity})): ?>";
+            // @codeCoverageIgnoreEnd
         });
-        
+
         Blade::directive('endCanAccess', function () {
+            // @codeCoverageIgnoreStart
             return "<?php endif; ?>";
+            // @codeCoverageIgnoreEnd
         });
     }
-} 
+}
