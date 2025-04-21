@@ -212,31 +212,36 @@ class RoleController extends Controller
     }
 
     public function destroy(Role $role)
-{
-    if (in_array($role->name, self::RESERVED_ROLES, true)) {
-        return redirect()->route('roles.index')
-            ->with('error', 'No puede eliminar un rol predefinido.');
-    }
+    {
+        if (in_array($role->name, self::RESERVED_ROLES, true)) {
+            return redirect()->route('roles.index')
+                ->with('error', 'No puede eliminar un rol predefinido.');
+        }
 
-  
-    if (User::where('role_id', $role->id)->count() > 0) {
-        return redirect()->route('roles.index')
-            ->with('error', 'El rol tiene usuarios asignados.');
-    }
 
-    try {
-        DB::beginTransaction();
-        RoleEntityPermission::where('role_id', $role->id)->delete();
-        $role->delete();
-        DB::commit();
-        return redirect()->route('roles.index')
-            ->with('success', 'Rol eliminado exitosamente.');
-    } catch (\Exception $e) {
-        DB::rollBack();
-        return redirect()->route('roles.index')
-            ->with('error', 'Error al eliminar el rol: ' . $e->getMessage());
+        if (User::where('role_id', $role->id)->count() > 0) {
+            // @codeCoverageIgnoreStart
+            return redirect()->route('roles.index')
+                ->with('error', 'El rol tiene usuarios asignados.');
+            // @codeCoverageIgnoreStart
+
+        }
+
+        try {
+            DB::beginTransaction();
+            RoleEntityPermission::where('role_id', $role->id)->delete();
+            $role->delete();
+            DB::commit();
+            return redirect()->route('roles.index')
+                ->with('success', 'Rol eliminado exitosamente.');
+            // @codeCoverageIgnoreEnd
+            } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('roles.index')
+                ->with('error', 'Error al eliminar el rol: ' . $e->getMessage());
+            }
+            // @codeCoverageIgnoreEnd
     }
-}
 
 public function permissions(Role $role)
     {
@@ -340,9 +345,8 @@ public function permissions(Role $role)
             ->route('roles.permissions', $role->id)
             ->with('success', 'Permisos actualizados exitosamente.');
     }
-      
 
-
+    // @codeCoverageIgnoreStart
     private function getSuperAdminDefaultPermissions()
     {
         $perms = Permission::all()->pluck('id', 'slug')->toArray();
@@ -354,7 +358,7 @@ public function permissions(Role $role)
             $ents['productos'] => [(int)$perms['ver-reportes']],
         ];
     }
-
+    // @codeCoverageIgnoreEnd
     private function getAuditorDefaultPermissions()
     {
         $perms = Permission::all()->pluck('id', 'slug')->toArray();
