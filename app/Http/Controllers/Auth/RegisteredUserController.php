@@ -19,23 +19,20 @@ class RegisteredUserController extends Controller
     /**
      * Display the registration view.
      */
-    public function index()
+    public function index(): View
     {
         $users = User::with('role')->get();
-    
-        // Convertimos la fecha UTC a la zona horaria local de cada usuario
+
         foreach ($users as $user) {
             if ($user->last_login_at) {
                 $user->last_login_at = Carbon::parse($user->last_login_at)
-                ->setTimezone(config('app.timezone'))
-                ->format('Y-m-d H:i:s');  // Cambiamos el formato a 'año-mes-día' que es más estándar
+                    ->setTimezone(config('app.timezone'))
+                    ->format('Y-m-d H:i:s');
             }
-            // Escapamos datos para prevenir XSS
             $user->username = e($user->username);
-
         }
-    
-        return view("auth.users.index", compact("users"));
+
+        return view('auth.users.index', compact('users'));
     }
 
     public function create(): View
@@ -50,19 +47,19 @@ class RegisteredUserController extends Controller
      * @throws \Illuminate\Validation\ValidationException
      */
     public function store(Request $request): RedirectResponse
-{
-    try {
-        $validated = $request->validate([
+    {
+        // First, run validation and let validation exceptions bubble
+        $validated = $request->validate([  
             'username' => [
-                'required', 
-                'string', 
-                'max:255', 
+                'required',
+                'string',
+                'max:255',
                 'unique:users,username',
                 'regex:/^[a-zA-Z0-9_.-]+$/'
             ],
             'password' => [
-                'required', 
-                'confirmed', 
+                'required',
+                'confirmed',
                 Rules\Password::min(10)
                     ->mixedCase()
                     ->numbers()
@@ -72,84 +69,90 @@ class RegisteredUserController extends Controller
             'role_id' => ['required', 'integer', 'exists:roles,id'],
         ]);
 
-        $user = User::create([
-            'username' => trim($validated['username']),
-            'password' => Hash::make($validated['password']),
-            'role_id' => (int)$validated['role_id'],
-        ]);
+        try {
+            $user = User::create([
+                'username' => trim($validated['username']),
+                'password' => Hash::make($validated['password']),
+                'role_id' => (int)$validated['role_id'],
+            ]);
 
-        event(new Registered($user));
-        
-        return redirect()->route('users.index')->with('success', 'Usuario creado correctamente.');
-    } catch (\Exception $e) {
-        return redirect()->back()->with('error', 'Error al crear el usuario: ' . $e->getMessage())->withInput();
+            event(new Registered($user));
+
+            return redirect()->route('users.index')
+                ->with('success', 'Usuario creado correctamente.');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->with('error', 'Error al crear el usuario: ' . $e->getMessage())
+                ->withInput();
+        }
     }
-}
-
 
     public function edit(User $user): View
     {
         $roles = Role::all();
         return view('auth.users.edit', compact('user', 'roles'));
     }
-    
+
     public function update(Request $request, User $user): RedirectResponse
     {
         try {
-         // Validamos los datos
-         $validated = $request->validate([
-            'username' => [
-                'required', 
-                'string', 
-                'max:255', 
-                'unique:users,username,' . $user->id . ',id',
-                'regex:/^[a-zA-Z0-9_.-]+$/' // Solo permitir alfanuméricos y caracteres limitados
-            ],
-            'role_id' => ['required', 'integer', 'exists:roles,id'],
-        ]);
-      
-        // Actualizamos con datos sanitizados
-        $user->username = trim($validated['username']);
-        $user->role_id = (int)$validated['role_id'];
-
-        // Opcional actualización de contraseña
-        if ($request->filled('password')) {
-            $passwordValidated = $request->validate([
-                'password' => [
-                    'confirmed', 
-                    Rules\Password::min(10)
-                        ->mixedCase()
-                        ->numbers()
-                        ->symbols()
-                        ->uncompromised()
+            $validated = $request->validate([
+                'username' => [
+                    'required',
+                    'string',
+                    'max:255',
+                    'unique:users,username,' . $user->id . ',id',
+                    'regex:/^[a-zA-Z0-9_.-]+$/'
                 ],
+                'role_id' => ['required', 'integer', 'exists:roles,id'],
             ]);
-            
-            $user->password = Hash::make($passwordValidated['password']);
-        }
 
-        $user->save();
-        
-        // Regeneramos sesión SOLO si el usuario está modificando su propio perfil
-        if (Auth::id() === $user->id) {
-            $request->session()->regenerate();
-        }
+            $user->username = trim($validated['username']);
+            $user->role_id = (int)$validated['role_id'];
 
-            return redirect()->route('users.index')->with('success', 'Usuario actualizado correctamente.');
+            if ($request->filled('password')) {
+                $pwd = $request->validate([
+                    'password' => [
+                        'confirmed',
+                        Rules\Password::min(10)
+                            ->mixedCase()
+                            ->numbers()
+                            ->symbols()
+                            ->uncompromised()
+                    ],
+                ]);
+                $user->password = Hash::make($pwd['password']);
+            }
+
+            $user->save();
+
+            if (Auth::id() === $user->id) {
+                $request->session()->regenerate();
+            }
+
+            return redirect()->route('users.index')
+                ->with('success', 'Usuario actualizado correctamente.');
         } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Error al actualizar el usuario: ' . $e->getMessage())->withInput();
+            return redirect()->back()
+                ->with('error', 'Error al actualizar el usuario: ' . $e->getMessage())
+                ->withInput();
         }
     }
 
     public function destroy(User $user): RedirectResponse
     {
-         // Evitamos que un usuario se elimine a sí mismo
-         if ($user->id === Auth::id()) {
+        if ($user->id === Auth::id()) {
             return redirect()->route('users.index')
                 ->with('error', 'No puedes eliminar tu propio usuario.');
         }
-      
-        $user->delete();
-        return redirect()->route('users.index')->with('success', 'Usuario eliminado.');
+
+        try {
+            $user->delete();
+            return redirect()->route('users.index')
+                ->with('success', 'Usuario eliminado.');
+        } catch (\Exception $e) {
+            return redirect()->route('users.index')
+                ->with('error', 'Error al eliminar el usuario: ' . $e->getMessage());
+        }
     }
 }

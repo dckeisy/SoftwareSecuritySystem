@@ -190,6 +190,10 @@ test('update method updates role with permissions', function () {
 });
 
 test('destroy method deletes role', function () {
+    // Asegurarse de que no hay usuarios con el rol que vamos a crear
+    // (Esta línea es opcional si tu base de datos de prueba está limpia)
+    User::where('role_id', '>', 0)->update(['role_id' => null]);
+    
     // Crear un rol que no sea predefinido
     $role = Role::create([
         'name' => 'Deletable Test Role',
@@ -198,11 +202,6 @@ test('destroy method deletes role', function () {
     
     // Comprobar que el rol existe antes de eliminarlo
     $this->assertDatabaseHas('roles', ['id' => $role->id]);
-    
-    // Mockear usuarios para que el rol no tenga usuarios asignados
-    $mockUserCount = Mockery::mock('overload:App\Models\User');
-    $mockUserCount->shouldReceive('where')->andReturnSelf();
-    $mockUserCount->shouldReceive('count')->andReturn(0);
     
     // Llamar al método destroy del controlador
     $response = $this->controller->destroy($role);
@@ -213,6 +212,9 @@ test('destroy method deletes role', function () {
     
     // Verificar que la redirección es a la ruta correcta
     $this->assertEquals(route('roles.index'), $response->getTargetUrl());
+    
+    // Verificar que el rol ya no existe
+    $this->assertDatabaseMissing('roles', ['id' => $role->id]);
 });
 
 test('permissions method returns view with role permissions', function () {
@@ -231,7 +233,7 @@ test('permissions method returns view with role permissions', function () {
     $this->assertTrue(isset($viewData['role']));
     $this->assertTrue(isset($viewData['entities']));
     $this->assertTrue(isset($viewData['permissions']));
-    $this->assertTrue(isset($viewData['currentPermissions']));
+    $this->assertTrue(isset($viewData['rolePermissions'])); 
 });
 
 test('updatePermissions method updates role permissions', function () {
@@ -245,21 +247,19 @@ test('updatePermissions method updates role permissions', function () {
     $usuariosId = Entity::where('slug', 'usuarios')->first()->id;
     $crearId = Permission::where('slug', 'crear')->first()->id;
     
-    // Datos para actualizar permisos
+    // Datos para actualizar permisos (adaptados al nuevo formato)
     $permissionsData = [
-        'permissions' => [
+        'entity_permissions' => [
             $usuariosId => [$crearId]
         ]
     ];
     
-    // Crear una solicitud mockada
+    // Crear una solicitud mockada con los nuevos parámetros
     $request = Mockery::mock(Request::class);
-    $request->shouldReceive('has')->with('permissions')->andReturn(true);
-    $request->shouldReceive('get')->with('permissions')->andReturn($permissionsData['permissions']);
+    $request->shouldReceive('validate')->andReturn($permissionsData);
     
-    // Mockear la transacción de DB
-    DB::shouldReceive('beginTransaction')->once();
-    DB::shouldReceive('commit')->once();
+    // No necesitamos mockear beginTransaction y commit
+    // ya que DB::transaction() lo maneja internamente
     
     // Llamar al método updatePermissions del controlador
     $response = $this->controller->updatePermissions($request, $role);
@@ -268,8 +268,8 @@ test('updatePermissions method updates role permissions', function () {
     $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
     $this->assertTrue($response->getSession()->has('success'));
     
-    // Verificar que la redirección es a la ruta correcta
-    $this->assertEquals(route('roles.index'), $response->getTargetUrl());
+    // Verificar que la redirección es a la ruta correcta (ajustada a la nueva ruta)
+    $this->assertEquals(route('roles.permissions', $role->id), $response->getTargetUrl());
 });
 
 // Prueba para asegurar la cobertura del controlador

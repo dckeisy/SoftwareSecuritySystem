@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\Entity;
 use App\Models\Permission;
 use App\Models\RoleEntityPermission;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,6 @@ class RoleController extends Controller
     public function index()
     {
         $roles = Role::all();
-        // Escape de datos para prevenir XSS
         foreach ($roles as $role) {
             $role->name = e($role->name);
             $role->slug = e($role->slug);
@@ -38,7 +38,9 @@ class RoleController extends Controller
     {
         $validated = $request->validate([
             'name' => [
-                'required', 'string', 'max:100',
+                'required',
+                'string',
+                'max:100',
                 'regex:/^[a-zA-Z0-9\s\-_]+$/',
                 'unique:roles,name',
             ],
@@ -59,27 +61,30 @@ class RoleController extends Controller
         }
 
         try {
-            $role = DB::transaction(function () use ($name, $slug, $request) {
-                $role = Role::create(['name' => $name, 'slug' => $slug]);
-                $auditorDefaults = $this->getAuditorDefaultPermissions();
-                foreach ($auditorDefaults as $entityId => $permIds) {
-                    foreach ($permIds as $permId) {
-                        RoleEntityPermission::create([
-                            'role_id'       => $role->id,
-                            'entity_id'     => (int)$entityId,
-                            'permission_id' => (int)$permId,
-                        ]);
-                    }
+            DB::beginTransaction();
+
+            $role = Role::create(['name' => $name, 'slug' => $slug]);
+
+            $auditorDefaults = $this->getAuditorDefaultPermissions();
+            foreach ($auditorDefaults as $entityId => $permIds) {
+                foreach ($permIds as $permId) {
+                    RoleEntityPermission::create([
+                        'role_id'       => $role->id,
+                        'entity_id'     => (int)$entityId,
+                        'permission_id' => (int)$permId,
+                    ]);
                 }
-                foreach ($request->input('permissions', []) as $rawEntityId => $permIds) {
+            }
+
+            if ($request->has('permissions')) {
+                $permissionsInput = $request->get('permissions');
+                foreach ($permissionsInput as $rawEntityId => $permIds) {
                     $entityId = filter_var($rawEntityId, FILTER_VALIDATE_INT);
                     if ($entityId === false) continue;
                     foreach ($permIds as $rawPermId) {
                         $permissionId = filter_var($rawPermId, FILTER_VALIDATE_INT);
                         if ($permissionId === false) continue;
-                        if (!isset($auditorDefaults[$entityId]) ||
-                            !in_array($permissionId, $auditorDefaults[$entityId], true)
-                        ) {
+                        if (!isset($auditorDefaults[$entityId]) || !in_array($permissionId, $auditorDefaults[$entityId], true)) {
                             RoleEntityPermission::create([
                                 'role_id'       => $role->id,
                                 'entity_id'     => $entityId,
@@ -88,12 +93,13 @@ class RoleController extends Controller
                         }
                     }
                 }
-                return $role;
-            });
+            }
 
+            DB::commit();
             return redirect()->route('roles.index')
                 ->with('success', 'Rol creado exitosamente.');
         } catch (\Exception $e) {
+            DB::rollBack();
             return redirect()->back()
                 ->with('error', 'Error al crear el rol: ' . $e->getMessage())
                 ->withInput();
@@ -104,8 +110,10 @@ class RoleController extends Controller
     {
         $entities = Entity::all();
         $permissions = Permission::all();
+
         $role->name = e($role->name);
         $role->slug = e($role->slug);
+
         $rolePermissions = [];
         foreach ($entities as $entity) {
             $rolePermissions[$entity->id] = RoleEntityPermission::where('role_id', $role->id)
@@ -114,6 +122,7 @@ class RoleController extends Controller
                 ->map(fn($id) => (int)$id)
                 ->toArray();
         }
+
         return view('roles.edit', compact('role', 'entities', 'permissions', 'rolePermissions'));
     }
 
@@ -121,7 +130,9 @@ class RoleController extends Controller
     {
         $validated = $request->validate([
             'name' => [
-                'required', 'string', 'max:100',
+                'required',
+                'string',
+                'max:100',
                 'regex:/^[a-zA-Z0-9\s\-_]+$/',
                 Rule::unique('roles', 'name')->ignore($role->id),
             ],
@@ -138,32 +149,40 @@ class RoleController extends Controller
         $slug = $baseSlug;
         if ($baseSlug !== $role->slug) {
             $count = 1;
-            while (Role::where('slug', $slug)->where('id', '!=', $role->id)->exists()) {
+            while (Role::where('slug', $slug)
+                ->where('id', '!=', $role->id)
+                ->exists()) {
                 $slug = $baseSlug . '-' . $count++;
             }
         }
 
         try {
-            DB::transaction(function () use ($role, $name, $slug, $request) {
-                $role->update(['name' => $name, 'slug' => $slug]);
-                $auditorDefaults = $this->getAuditorDefaultPermissions();
-                foreach (Entity::all() as $entity) {
-                    $basic = $auditorDefaults[$entity->id] ?? [];
-                    RoleEntityPermission::where('role_id', $role->id)
-                        ->where('entity_id', $entity->id)
-                        ->whereNotIn('permission_id', $basic)
-                        ->delete();
+            DB::beginTransaction();
+
+            $role->update(['name' => $name, 'slug' => $slug]);
+
+            $auditorDefaults = $this->getAuditorDefaultPermissions();
+            foreach (Entity::all() as $entity) {
+                $basic = $auditorDefaults[$entity->id] ?? [];
+                RoleEntityPermission::where('role_id', $role->id)
+                    ->where('entity_id', $entity->id)
+                    ->whereNotIn('permission_id', $basic)
+                    ->delete();
+            }
+
+            foreach ($auditorDefaults as $entityId => $permIds) {
+                foreach ($permIds as $permId) {
+                    RoleEntityPermission::firstOrCreate([
+                        'role_id'       => $role->id,
+                        'entity_id'     => (int)$entityId,
+                        'permission_id' => (int)$permId,
+                    ]);
                 }
-                foreach ($auditorDefaults as $entityId => $permIds) {
-                    foreach ($permIds as $permId) {
-                        RoleEntityPermission::firstOrCreate([
-                            'role_id'       => $role->id,
-                            'entity_id'     => (int)$entityId,
-                            'permission_id' => (int)$permId,
-                        ]);
-                    }
-                }
-                foreach ($request->input('permissions', []) as $rawEntityId => $permIds) {
+            }
+
+            if ($request->has('permissions')) {
+                $permissionsInput = $request->get('permissions');
+                foreach ($permissionsInput as $rawEntityId => $permIds) {
                     $entityId = filter_var($rawEntityId, FILTER_VALIDATE_INT);
                     if ($entityId === false) continue;
                     foreach ($permIds as $rawPermId) {
@@ -179,11 +198,13 @@ class RoleController extends Controller
                         }
                     }
                 }
-            });
+            }
 
+            DB::commit();
             return redirect()->route('roles.index')
                 ->with('success', 'Rol actualizado exitosamente.');
         } catch (\Exception $e) {
+            DB::rollBack();
             return redirect()->back()
                 ->with('error', 'Error al actualizar el rol: ' . $e->getMessage())
                 ->withInput();
@@ -191,112 +212,139 @@ class RoleController extends Controller
     }
 
     public function destroy(Role $role)
-    {
-        if (in_array($role->name, self::RESERVED_ROLES, true)) {
-            return redirect()->route('roles.index')
-                ->with('error', 'No puede eliminar un rol predefinido.');
-        }
-        if ($role->users()->count() > 0) {
-            return redirect()->route('roles.index')
-                ->with('error', 'El rol tiene usuarios asignados.');
-        }
-        try {
-            DB::transaction(function () use ($role) {
-                RoleEntityPermission::where('role_id', $role->id)->delete();
-                $role->delete();
-            });
-            return redirect()->route('roles.index')
-                ->with('success', 'Rol eliminado exitosamente.');
-        } catch (\Exception $e) {
-            return redirect()->route('roles.index')
-                ->with('error', 'Error al eliminar el rol: ' . $e->getMessage());
-        }
+{
+    if (in_array($role->name, self::RESERVED_ROLES, true)) {
+        return redirect()->route('roles.index')
+            ->with('error', 'No puede eliminar un rol predefinido.');
     }
 
-    public function permissions(Role $role)
+  
+    if (User::where('role_id', $role->id)->count() > 0) {
+        return redirect()->route('roles.index')
+            ->with('error', 'El rol tiene usuarios asignados.');
+    }
+
+    try {
+        DB::beginTransaction();
+        RoleEntityPermission::where('role_id', $role->id)->delete();
+        $role->delete();
+        DB::commit();
+        return redirect()->route('roles.index')
+            ->with('success', 'Rol eliminado exitosamente.');
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return redirect()->route('roles.index')
+            ->with('error', 'Error al eliminar el rol: ' . $e->getMessage());
+    }
+}
+
+public function permissions(Role $role)
     {
-        $entities = Entity::all();
+        // Cargar entidades y permisos
+        $entities    = Entity::all();
         $permissions = Permission::all();
-        $defaultPermissions = [];
-        if (Str::startsWith($role->slug, 'superadmin')) {
+
+        // Determinar permisos por defecto según slug
+        if (str_starts_with($role->slug, 'superadmin')) {
             $defaultPermissions = $this->getSuperAdminDefaultPermissions();
-        } elseif (Str::startsWith($role->slug, 'auditor')) {
+        } elseif (str_starts_with($role->slug, 'auditor')) {
             $defaultPermissions = $this->getAuditorDefaultPermissions();
-        } elseif (Str::startsWith($role->slug, 'registrador')) {
+        } elseif (str_starts_with($role->slug, 'registrador')) {
             $defaultPermissions = $this->getRegistradorDefaultPermissions();
+        } else {
+            // Para roles personalizados, usar los del Auditor
+            $defaultPermissions = $this->getAuditorDefaultPermissions();
         }
+
+        // Permisos actuales: se castéan a entero para evitar strings
         $rolePermissions = [];
         foreach ($entities as $entity) {
             $rolePermissions[$entity->id] = RoleEntityPermission::where('role_id', $role->id)
                 ->where('entity_id', $entity->id)
                 ->pluck('permission_id')
-                ->map(fn($id) => (int)$id)
+                ->map(fn($id) => (int) $id)
                 ->toArray();
         }
-        return view('roles.permissions', compact('role', 'entities', 'permissions', 'rolePermissions', 'defaultPermissions')); 
+
+        return view('roles.permissions', compact(
+            'role',
+            'entities',
+            'permissions',
+            'rolePermissions',
+            'defaultPermissions'
+        ));
     }
 
+    /**
+     * Recibe el formulario y actualiza la tabla pivote.
+     * Se validan estrictamente todos los inputs como enteros y existentes.
+     */
     public function updatePermissions(Request $request, Role $role)
     {
-        if (Str::startsWith($role->slug, 'superadmin')) {
+        // Validación de la entrada: sólo arrays de enteros que existan en la tabla permissions
+        $validated = $request->validate([
+            'entity_permissions'        => ['required', 'array'],
+            'entity_permissions.*'      => ['array'],
+            'entity_permissions.*.*'    => ['integer', Rule::exists('permissions', 'id')],
+        ]);
+
+        // Determinar permisos básicos (no removibles)
+        if (str_starts_with($role->slug, 'superadmin')) {
             $defaultPermissions = $this->getSuperAdminDefaultPermissions();
-        } elseif (Str::startsWith($role->slug, 'auditor')) {
+        } elseif (str_starts_with($role->slug, 'auditor')) {
             $defaultPermissions = $this->getAuditorDefaultPermissions();
-        } elseif (Str::startsWith($role->slug, 'registrador')) {
+        } elseif (str_starts_with($role->slug, 'registrador')) {
             $defaultPermissions = $this->getRegistradorDefaultPermissions();
         } else {
             $defaultPermissions = $this->getAuditorDefaultPermissions();
         }
 
-        try {
-            DB::transaction(function () use ($role, $request, $defaultPermissions) {
-                foreach (Entity::all() as $entity) {
-                    $basic = $defaultPermissions[$entity->id] ?? [];
-                    RoleEntityPermission::where('role_id', $role->id)
-                        ->where('entity_id', $entity->id)
-                        ->whereNotIn('permission_id', $basic)
-                        ->delete();
-                }
-                foreach ($defaultPermissions as $entityId => $permIds) {
-                    foreach ($permIds as $permId) {
-                        RoleEntityPermission::firstOrCreate([
-                            'role_id'       => $role->id,
-                            'entity_id'     => (int)$entityId,
-                            'permission_id' => (int)$permId,
-                        ]);
-                    }
-                }
-                foreach ($request->input('entity_permissions', []) as $rawEntityId => $permIds) {
-                    $entityId = filter_var($rawEntityId, FILTER_VALIDATE_INT);
-                    if ($entityId === false) continue;
-                    foreach ($permIds as $rawPermId) {
-                        $permissionId = filter_var($rawPermId, FILTER_VALIDATE_INT);
-                        if ($permissionId === false) continue;
-                        $basic = $defaultPermissions[$entityId] ?? [];
-                        if (!in_array($permissionId, $basic, true)) {
-                            RoleEntityPermission::firstOrCreate([
-                                'role_id'       => $role->id,
-                                'entity_id'     => $entityId,
-                                'permission_id' => $permissionId,
-                            ]);
-                        }
-                    }
-                }
-            });
+        // Actualización en transacción atómica
+        DB::transaction(function() use ($validated, $role, $defaultPermissions) {
+            // Para cada entidad, mantenemos sólo los permisos:
+            //   – básicos (defaultPermissions)
+            //   – y los que el usuario marcó en el formulario
+            foreach (Entity::all() as $entity) {
+                $eid = $entity->id;
 
-            return redirect()->route('roles.permissions', $role->id)
-                ->with('success', 'Permisos actualizados exitosamente.');
-        } catch (\Exception $e) {
-            return redirect()->back()
-                ->with('error', 'Error al asignar permisos: ' . $e->getMessage());
-        }
+                // permisos enviados (si no hay, será array vacío)
+                $sent = $validated['entity_permissions'][$eid] ?? [];
+
+                // unimos básicos + enviados (sin duplicados)
+                $allowed = array_unique(array_merge(
+                    $defaultPermissions[$eid] ?? [],
+                    $sent
+                ));
+
+                // eliminar cualquier permiso que NO esté en $allowed
+                RoleEntityPermission::where('role_id', $role->id)
+                    ->where('entity_id', $eid)
+                    ->whereNotIn('permission_id', $allowed)
+                    ->delete();
+
+                // insertar los que faltan, usando firstOrCreate para evitar duplicados
+                foreach ($allowed as $pid) {
+                    RoleEntityPermission::firstOrCreate([
+                        'role_id'       => $role->id,
+                        'entity_id'     => $eid,
+                        'permission_id' => $pid,
+                    ]);
+                }
+            }
+        });
+
+        return redirect()
+            ->route('roles.permissions', $role->id)
+            ->with('success', 'Permisos actualizados exitosamente.');
     }
+      
 
-    // Permisos por defecto
+
     private function getSuperAdminDefaultPermissions()
     {
         $perms = Permission::all()->pluck('id', 'slug')->toArray();
         $ents  = Entity::all()->pluck('id', 'slug')->toArray();
+
         return [
             $ents['usuarios']  => [(int)$perms['crear'], (int)$perms['editar'], (int)$perms['borrar'], (int)$perms['ver-reportes']],
             $ents['roles']     => [(int)$perms['crear'], (int)$perms['editar'], (int)$perms['borrar'], (int)$perms['ver-reportes']],
@@ -308,6 +356,7 @@ class RoleController extends Controller
     {
         $perms = Permission::all()->pluck('id', 'slug')->toArray();
         $ents  = Entity::all()->pluck('id', 'slug')->toArray();
+
         return [
             $ents['usuarios']  => [(int)$perms['ver-reportes']],
             $ents['productos'] => [(int)$perms['ver-reportes']],
@@ -318,6 +367,7 @@ class RoleController extends Controller
     {
         $perms = Permission::all()->pluck('id', 'slug')->toArray();
         $ents  = Entity::all()->pluck('id', 'slug')->toArray();
+
         return [
             $ents['usuarios']  => [(int)$perms['ver-reportes']],
             $ents['productos'] => [(int)$perms['crear'], (int)$perms['editar'], (int)$perms['borrar'], (int)$perms['ver-reportes']],
