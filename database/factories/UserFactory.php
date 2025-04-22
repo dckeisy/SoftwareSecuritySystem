@@ -26,7 +26,7 @@ class UserFactory extends Factory
         return [
             'username' => fake()->userName(),
             'role_id' => null, // Establecer a null inicialmente, se asignará después
-            'password' => Hash::make('user12345'), // Contraseña por defecto para todos los usuarios
+            'password' => Hash::make('Isw@2025user'), // Contraseña por defecto para todos los usuarios
         ];
     }
 
@@ -37,7 +37,7 @@ class UserFactory extends Factory
     {
         return $this->state(function (array $attributes) {
             return [
-                'password' => Hash::make('admin12345'),
+                'password' => Hash::make('Isw@2025admin'),
             ];
         });
     }
