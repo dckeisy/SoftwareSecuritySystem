@@ -33,7 +33,7 @@ class DatabaseSeeder extends Seeder
             // Asignar el primer usuario como superadmin
             $users[0]->update([
                 'role_id' => $superadmin->id,
-                'password' => bcrypt('admin12345')
+                'password' => bcrypt('Isw@2025admin')
             ]);
         }
         

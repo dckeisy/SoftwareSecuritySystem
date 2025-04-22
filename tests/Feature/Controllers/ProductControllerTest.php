@@ -11,9 +11,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Mockery;
 
-// Configuración antes de cada prueba
+// Setup before each test
 beforeEach(function () {
-    // Ejecutar los seeders necesarios
+    // Run the necessary seeders
     $this->seed([
         EntitySeeder::class,
         PermissionSeeder::class,
@@ -21,27 +21,27 @@ beforeEach(function () {
         RoleEntityPermissionSeeder::class
     ]);
 
-    // Obtener el rol Registrador que tiene permisos para gestionar productos
-    $registradorRole = Role::where('slug', 'registrador')->first();
+    // Get the Registrar role with permissions to manage products
+    $registrarRole = Role::where('slug', 'registrador')->first();
 
-    // Crear usuario registrador para las pruebas con los campos correctos
-    $this->registradorUser = User::factory()->create([
+    // Create a test registrar user with the correct fields
+    $this->registrarUser = User::factory()->create([
         'username' => 'registrador_test',
-        'role_id' => $registradorRole->id
+        'role_id' => $registrarRole->id
     ]);
 
-    // Autenticar al usuario para todas las pruebas
-    $this->actingAs($this->registradorUser);
+    // Authenticate the user for all tests
+    $this->actingAs($this->registrarUser);
 
-    // Deshabilitar los middleware para las pruebas de integración
+    // Disable middleware for integration testing
     $this->withoutMiddleware();
 
-    // Crear algunos productos de prueba
+    // Create some test products
     $this->products = Product::factory()->count(3)->create([
-        'user_id' => $this->registradorUser->id
+        'user_id' => $this->registrarUser->id
     ]);
 
-    // Instanciar el controlador para pruebas unitarias
+    // Instantiate the controller for unit tests
     $this->controller = new ProductController();
 });
 
@@ -52,81 +52,73 @@ afterEach(function() {
 test('index method returns view with products', function () {
     $data = [
         'code'        => 'CODE123',
-        'name'        => 'Producto Test',
-        'description' => 'Descripcion valida.',
+        'name'        => 'Test Product',
+        'description' => 'Valid description.',
         'quantity'    => 5,
         'price'       => 49.95,
     ];
 
     $response = $this->post(route('products.store'), $data);
 
-    // 1) Redirección al índice
-    $response->assertRedirect(route('products.index'));  // :contentReference[oaicite:4]{index=4}
+    // 1) Redirect to index
+    $response->assertRedirect(route('products.index'));
 
-    // 2) Registro en base de datos
+    // 2) Record in the database
     $this->assertDatabaseHas('products', $data);
 });
 
 test('create method returns view with form for creating products', function () {
-    // 1. Probar a través de la ruta (integración)
+    // 1. Test through the route (integration)
     $response = $this->get(route('products.create'));
 
-    // Verificar que la vista sea la correcta (solo si supera el 404 inicial)
+    // Verify the correct view (only if it passes initial 404)
     if ($response->status() === 200) {
         $response->assertViewIs('products.create');
-        // Comprobar que la vista no contiene errores
+        // Check that the view has no errors
         $response->assertSessionHasNoErrors();
     }
 
-    // 2. Probar directamente el método del controlador (unitario)
+    // 2. Test the controller method directly (unit)
     $result = $this->controller->create();
 
-    // Verificar que devuelve una vista
+    // Verify it returns a view
     $this->assertEquals('products.create', $result->getName());
 });
 
 test('store method creates a new product', function () {
-     // Datos para el nuevo producto
     $productData = [
         'code' => 'TEST001',
-        'name' => 'Producto de Prueba',
-        'description' => 'Descripcion del producto de prueba',
+        'name' => 'Test Product',
+        'description' => 'Test product description',
         'quantity' => 10,
         'price' => 99.99,
     ];
 
     $response = $this->post(route('products.store'), $productData);
 
-    // Verificar que la respuesta es una redirección a la ruta 'products.index'
     $response->assertRedirect(route('products.index'));
 
-    // Verificar que el producto fue creado en la base de datos
     $this->assertDatabaseHas('products', [
         'code' => 'TEST001',
-        'name' => 'Producto de Prueba',
+        'name' => 'Test Product',
     ]);
 });
 
 test('edit method returns view with product data', function () {
-    // Obtener un producto existente
     $product = $this->products->first();
 
-    // 1. Probar a través de la ruta (integración)
+    // 1. Test through the route (integration)
     $response = $this->get(route('products.edit', $product));
 
-    // Verificar que la vista sea la correcta (solo si supera el 404 inicial)
     if ($response->status() === 200) {
         $response->assertViewIs('products.edit');
         $response->assertViewHas('product');
 
-        // Verificar que el producto es el correcto
         $viewProduct = $response->viewData('product');
         $this->assertEquals($product->id, $viewProduct->id);
     }
 
-    // 2. Probar directamente el método del controlador usando una clase anónima
-    // pero que no sobreescriba completamente el método, sino que use el método original
-    // con la función request() mockada
+    // 2. Test the controller method with a mocked request
     $controller = new class extends ProductController {
         protected $wantsJsonValue = false;
 
@@ -136,7 +128,6 @@ test('edit method returns view with product data', function () {
         }
 
         public function editTest(Product $product) {
-            // Redefinir la función global request para este método
             $request = new class($this->wantsJsonValue) {
                 protected $wantsJsonValue;
 
@@ -149,13 +140,8 @@ test('edit method returns view with product data', function () {
                 }
             };
 
-            // Usar Closure::bind para redefinir temporalmente la función request
             $self = $this;
             $editFn = function($product) use ($self, $request) {
-                // Guardar la función request original
-                $originalRequest = function_exists('request') ? 'request' : null;
-
-                // Redefinir la función request en este contexto
                 if (!function_exists('overrideRequest')) {
                     function overrideRequest() {
                         global $requestMock;
@@ -165,48 +151,33 @@ test('edit method returns view with product data', function () {
                 global $requestMock;
                 $requestMock = $request;
 
-                // Ejecutar el método parent::edit con nuestra request mockada
                 $result = null;
                 try {
                     if ($request->wantsJson()) {
-                        // Simulamos el comportamiento del método original cuando wantsJson es true
                         $result = response()->json(['product' => $product], 200);
                     } else {
-                        // Simulamos el comportamiento del método original cuando wantsJson es false
                         $result = view('products.edit', compact('product'));
                     }
                 } finally {
-                    // Restaurar la función request (no es necesario pero es buena práctica)
                     unset($GLOBALS['requestMock']);
                 }
 
                 return $result;
             };
 
-            // Ejecutar la función en el contexto de este objeto
             return $editFn($product);
         }
     };
 
-    // Probar el caso HTML (wantsJson = false)
     $htmlResult = $controller->setWantsJson(false)->editTest($product);
-
-    // Verificar que devuelve una vista
     $this->assertInstanceOf(\Illuminate\View\View::class, $htmlResult);
     $this->assertEquals('products.edit', $htmlResult->name());
-
-    // Verificar que la vista tiene el producto correcto
     $viewData = $htmlResult->getData();
     $this->assertTrue(isset($viewData['product']));
     $this->assertEquals($product->id, $viewData['product']->id);
 
-    // Probar el caso JSON (wantsJson = true)
     $jsonResult = $controller->setWantsJson(true)->editTest($product);
-
-    // Verificar que es un JsonResponse
     $this->assertInstanceOf(\Illuminate\Http\JsonResponse::class, $jsonResult);
-
-    // Verificar el contenido JSON
     $jsonData = json_decode($jsonResult->getContent(), true);
     $this->assertArrayHasKey('product', $jsonData);
     $this->assertEquals($product->id, $jsonData['product']['id']);
@@ -217,8 +188,8 @@ test('update method works directly via controller', function () {
 
     $updatedData = [
         'code' => $product->code,
-        'name' => 'Producto Actualizado Nuevamente',
-        'description' => 'Nueva descripción',
+        'name' => 'Product Updated Again',
+        'description' => 'New description',
         'quantity' => 30,
         'price' => 199.99
     ];
@@ -237,55 +208,39 @@ test('update method works directly via controller', function () {
     $this->assertDatabaseHas('products', $updatedData);
 });
 
-
 test('destroy method deletes a product', function () {
-    // Obtener un producto existente
     $product = $this->products->first();
 
-    // Verificar que el producto existe antes de eliminarlo
     $this->assertDatabaseHas('products', ['id' => $product->id]);
 
-    // 1. Probar a través de la ruta (integración)
     $response = $this->delete(route('products.destroy', $product));
 
-    // Restaurar el producto para la siguiente prueba
     $restoredProduct = Product::factory()->create([
-        'user_id' => $this->registradorUser->id
+        'user_id' => $this->registrarUser->id
     ]);
 
-    // 2. Probar directamente el método del controlador (unitario)
     $response = $this->controller->destroy($restoredProduct);
 
-    // Verificar que la respuesta es una redirección
     $this->assertInstanceOf(\Illuminate\Http\RedirectResponse::class, $response);
     $this->assertEquals(route('products.index'), $response->getTargetUrl());
 
-    // Verificar que el producto fue eliminado
     $this->assertDatabaseMissing('products', ['id' => $restoredProduct->id]);
 });
 
-// Prueba de validación de errores en el método store
 test('validation errors are handled properly', function () {
-    // Datos incompletos/inválidos para el producto
     $invalidData = [
-        'code' => '', // Código vacío - debe fallar
-        'name' => 'Producto Inválido',
-        'description' => 'Descripción de prueba',
-        'quantity' => -5, // Cantidad negativa - debe fallar
-        'price' => 'no es precio' // No es numérico - debe fallar
+        'code' => '', 
+        'name' => 'Invalid Product',
+        'description' => 'Test description',
+        'quantity' => -5, 
+        'price' => 'not a price' 
     ];
 
-    // 1. Probar a través de la ruta (integración)
     $response = $this->post(route('products.store'), $invalidData);
 
-    // Verificar que la validación falla (solo si supera el 404 inicial)
     if ($response->status() !== 404) {
         $response->assertSessionHasErrors(['code', 'quantity', 'price']);
     }
 
-    // Verificar que el producto NO fue creado en la base de datos
-    $this->assertDatabaseMissing('products', ['name' => 'Producto Inválido']);
-
-    // 2. Probar directamente el método del controlador (unitario) - No es necesario probar esto
-    // porque la validación se maneja en el Request y no en el controlador directamente
+    $this->assertDatabaseMissing('products', ['name' => 'Invalid Product']);
 });
