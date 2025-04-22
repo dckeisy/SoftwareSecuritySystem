@@ -29,37 +29,36 @@ class ProductController extends Controller
    public function store(Request $request)
    {
     
-    // Validación extendida para seguridad
     $validated = $request->validate([
         'code' => [
             'required',
             'unique:products,code',
-            'regex:/^[a-zA-Z0-9_-]+$/', // Solo permitir caracteres seguros
+            'regex:/^[a-zA-Z0-9_-]+$/', 
             'max:50'
         ],
         'name' => [
             'required',
             'string',
             'max:255',
-            'regex:/^[a-zA-Z0-9\s.,_-]+$/' // Permitir solo caracteres seguros
+            'regex:/^[a-zA-Z0-9\s.,_-]+$/' 
         ],
         'description' => [
             'required',
             'string',
             'max:1000',
-            'regex:/^[\w\s\.,!?()\-&]+$/' // Solo permitir caracteres seguros
+            'regex:/^[\w\s\.,!?()\-&]+$/' 
         ],
         'quantity' => [
             'required',
             'integer',
             'min:0',
-            'max:999999' // Establecer límites razonables
+            'max:999999' 
         ],
         'price' => [
             'required',
             'numeric',
             'min:0',
-            'max:999999.99' // Establecer límites razonables
+            'max:999999.99' 
         ],
     ]);
     
@@ -87,37 +86,36 @@ class ProductController extends Controller
    public function update(Request $request, Product $product)
    {
     
-     // Validación extendida para seguridad
      $validated = $request->validate([
         'code' => [
             'required',
             'unique:products,code,' . $product->id,
-            'regex:/^[a-zA-Z0-9_-]+$/', // Solo permitir caracteres seguros
+            'regex:/^[a-zA-Z0-9_-]+$/', 
             'max:50'
         ],
         'name' => [
             'required',
             'string',
             'max:255',
-            'regex:/^[a-zA-Z0-9\s.,_-]+$/' // Permitir solo caracteres seguros
+            'regex:/^[a-zA-Z0-9\s.,_-]+$/' 
         ],
         'description' => [
             'required',
             'string',
             'max:1000',
-            'regex:/^[\w\s\.,!?()\-&]+$/' // Solo permitir caracteres seguros
+            'regex:/^[\w\s\.,!?()\-&]+$/' 
         ],
         'quantity' => [
             'required',
             'integer',
             'min:0',
-            'max:999999' // Establecer límites razonables
+            'max:999999' 
         ],
         'price' => [
             'required',
             'numeric',
             'min:0',
-            'max:999999.99' // Establecer límites razonables
+            'max:999999.99' 
         ],
     ]);
 
