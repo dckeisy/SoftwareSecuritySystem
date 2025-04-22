@@ -33,15 +33,6 @@
                         
                         <h3 class="text-lg font-medium mb-4">Asignar Permisos por Entidad</h3>
                         
-                        <div class="mb-4 p-4 bg-blue-100 text-blue-700 rounded-md">
-                            <p class="font-medium">Información importante:</p>
-                            <ul class="list-disc pl-5 mt-1">
-                                <li>Los permisos básicos (los mismos que tiene el rol Auditor) aparecerán marcados como "(Por defecto)".</li>
-                                <li>Estos permisos básicos no se pueden quitar.</li>
-                                <li>Puede asignar permisos adicionales según las necesidades del rol.</li>
-                            </ul>
-                        </div>
-                        
                         <div class="overflow-x-auto">
                             <table class="min-w-full bg-white dark:bg-gray-700">
                                 <thead>
